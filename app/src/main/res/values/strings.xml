@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Akrolyb</string>
+    <string name="forced_title">Forced</string>
+    <string name="saving_title">Saving</string>
 </resources>
