@@ -1,4 +1,4 @@
-package com.jaqxues.akrolyb
+package com.jaqxues.akrolyb.sample
 
 import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner
 import androidx.test.platform.app.InstrumentationRegistry

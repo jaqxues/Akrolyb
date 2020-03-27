@@ -1,4 +1,4 @@
-package com.jaqxues.akrolyb
+package com.jaqxues.akrolyb.sample
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle

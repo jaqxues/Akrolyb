@@ -1,4 +1,4 @@
-package com.jaqxues.akrolyb
+package com.jaqxues.akrolyb.sample
 
 import org.junit.Test
 
