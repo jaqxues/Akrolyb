@@ -1,0 +1,2 @@
+include ':app', ':akrolyb'
+rootProject.name='Akrolyb'
