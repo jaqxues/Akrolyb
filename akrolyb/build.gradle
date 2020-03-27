@@ -51,7 +51,7 @@ project.ext {
     mavDevelopers = ["ja":"jaqxues"]
     mavSiteUrl = "https://github.com/jaqxues/Akrolyb"
     mavGitUrl = mavSiteUrl + '.git'
-    mavProjectName = 'Akrolyb'
+    mavProjectName = 'akrolyb'
     mavPublishToInternalRepo = false
     mavLibraryLicenses = ["Apache-2.0":'http://www.apache.org/licenses/LICENSE-2.0.txt']
     mavLibraryDescription = "Library Stuff"
