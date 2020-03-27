@@ -90,12 +90,12 @@ abstract class FeatureHelper : Feature {
         return this
     }
 
-    companion object {
+    internal companion object {
         private lateinit var resolvedMembers: Map<MemberDec, Member>
         private var unhookMap = mutableMapOf<KClass<out Feature>, MutableList<XC_MethodHook.Unhook>>()
         private lateinit var activeFeatures: List<Feature>
 
-        internal fun loadAll(classLoader: ClassLoader, context: Context, featureManager: FeatureManager, vararg collectables: CollectableDec) {
+        fun loadAll(classLoader: ClassLoader, context: Context, featureManager: FeatureManager, vararg collectables: CollectableDec) {
             check(unhookMap.isEmpty()) { "Some Features already loaded" }
 
             activeFeatures = featureManager.getActiveFeatures()
@@ -109,13 +109,13 @@ abstract class FeatureHelper : Feature {
             }
         }
 
-        internal fun lateInitAll(classLoader: ClassLoader, activity: Activity) {
+        fun lateInitAll(classLoader: ClassLoader, activity: Activity) {
             for (feature in activeFeatures)
                 feature.lateInit(classLoader, activity)
         }
 
         /** @return true if unhooks have been performed */
-        internal fun unhookByFeature(feature: KClass<out Feature>): Boolean {
+        fun unhookByFeature(feature: KClass<out Feature>): Boolean {
             return unhookMap[feature]?.let { list ->
                 if (unhookMap.isEmpty())
                     return@let false
