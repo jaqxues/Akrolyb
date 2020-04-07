@@ -160,9 +160,11 @@ abstract class FeatureHelper : Feature {
 
                 resolvedClass ?: throw IllegalStateException("Unresolved Class")
 
+                // fixme Explicit "Useless" Cast to Member. Kotlin will otherwise cast to Executable, which is only available in Oreo+
+                @Suppress("USELESS_CAST")
                 resolved[member] = when (member) {
-                    is MethodDec -> member.findMethod(resolvedClass)
-                    is ConstructorDec -> member.findConstructor(resolvedClass)
+                    is MethodDec -> member.findMethod(resolvedClass) as Member
+                    is ConstructorDec -> member.findConstructor(resolvedClass) as Member
                 }
             }
             resolvedMembers = resolved.toMap()
