@@ -25,7 +25,7 @@ open class ClassDec(val className: String) {
      * Open: Allows Returning Class by direct reference (e.g. if Class is on BootClassLoader)
      */
     open fun findClass(classLoader: ClassLoader, cache: Boolean = true): Class<*> {
-        return if (cache && classCache.containsKey(className)) {
+        return if (cache && className in classCache) {
             classCache[className] ?: throw IllegalStateException("Value of key $className null")
         } else {
             XposedHelpers.findClass(className, classLoader).also {
