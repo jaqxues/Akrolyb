@@ -5,6 +5,8 @@ import android.content.Context
 import com.jaqxues.akrolyb.genhook.decs.MemberDec
 import com.jaqxues.akrolyb.genhook.decs.MemberDec.ConstructorDec
 import com.jaqxues.akrolyb.genhook.decs.MemberDec.MethodDec
+import com.jaqxues.akrolyb.genhook.states.*
+import com.jaqxues.akrolyb.genhook.states.StateManager
 import com.jaqxues.akrolyb.utils.CollectableDec
 import com.jaqxues.akrolyb.utils.Predicate
 import com.jaqxues.akrolyb.utils.collectAll
@@ -35,6 +37,7 @@ abstract class FeatureHelper : Feature {
             }
         } catch (ex: Exception) {
             Timber.e(ex)
+            stateManager.addCallError(this, method, ex)
             null
         }
     }
@@ -43,57 +46,64 @@ abstract class FeatureHelper : Feature {
         return callMethod(null, method, *params)
     }
 
-    protected fun hookMethod(method: MethodDec, hook: XC_MethodHook): XC_MethodHook.Unhook {
-        return XposedBridge.hookMethod(resolvedMembers[method], hook).addToUnhooks()
+    protected fun hookMethod(method: MethodDec, hook: XC_MethodHook) {
+        tryHook(method) { XposedBridge.hookMethod(resolvedMembers[method], hook).addToUnhooks() }
     }
 
-    protected fun hookConstructor(constructor: ConstructorDec, hook: XC_MethodHook): XC_MethodHook.Unhook {
-        return XposedBridge.hookMethod(resolvedMembers[constructor], hook).addToUnhooks()
+    protected fun hookConstructor(constructor: ConstructorDec, hook: XC_MethodHook) {
+        tryHook(constructor) { XposedBridge.hookMethod(resolvedMembers[constructor], hook).addToUnhooks() }
     }
 
-    protected fun hookAllMethods(methodDec: MethodDec, classLoader: ClassLoader, hook: XC_MethodHook): Set<XC_MethodHook.Unhook> {
-        return XposedBridge.hookAllMethods(
+    protected fun hookAllMethods(methodDec: MethodDec, classLoader: ClassLoader, hook: XC_MethodHook) {
+        tryHook(methodDec) {
+            XposedBridge.hookAllMethods(
                 XposedHelpers.findClass(methodDec.classDec.className, classLoader),
                 methodDec.methodName,
                 hook).addToUnhooks()
+        }
     }
 
     protected fun newInstance(constructorDec: ConstructorDec, vararg params: Any?): Any? {
-        return try {
+        return tryHook(constructorDec) {
             (resolvedMembers[constructorDec] as? Constructor<*>
-                    ?: throw AssertionError("Constructor not resolved"))
-                    .newInstance(*params)
-        } catch (e: Exception) {
-            Timber.e(e)
-            null
+                ?: throw AssertionError("Constructor not resolved"))
+                .newInstance(*params)
         }
     }
 
     // Entry Point Optional
     override fun lateInit(classLoader: ClassLoader, activity: Activity) {}
 
-    private fun Set<XC_MethodHook.Unhook>.addToUnhooks(): Set<XC_MethodHook.Unhook> {
+    private fun Set<XC_MethodHook.Unhook>.addToUnhooks() {
         val key = this@FeatureHelper::class
         val list = unhookMap[key] ?: (mutableListOf<XC_MethodHook.Unhook>().also {
             unhookMap[key] = it
         })
         list.addAll(this)
-        return this
     }
 
-    private fun XC_MethodHook.Unhook.addToUnhooks(): XC_MethodHook.Unhook {
+    private fun XC_MethodHook.Unhook.addToUnhooks() {
         val key = this@FeatureHelper::class
         val list = unhookMap[key] ?: (mutableListOf<XC_MethodHook.Unhook>().also {
             unhookMap[key] = it
         })
         list.add(this)
-        return this
+    }
+
+    private inline fun tryHook(dec: MemberDec, action: () -> Unit) {
+        try {
+            action()
+        } catch (e: Exception) {
+            stateManager.addHookError(dec, this, e)
+            Timber.e(e)
+        }
     }
 
     internal companion object {
         private lateinit var resolvedMembers: Map<MemberDec, Member>
         private var unhookMap = mutableMapOf<KClass<out Feature>, MutableList<XC_MethodHook.Unhook>>()
         private lateinit var activeFeatures: List<Feature>
+        private lateinit var stateManager: StateManager
 
         fun loadAll(classLoader: ClassLoader, context: Context, featureManager: FeatureManager, vararg collectables: CollectableDec) {
             check(unhookMap.isEmpty()) { "Some Features already loaded" }
@@ -102,16 +112,26 @@ abstract class FeatureHelper : Feature {
             if (activeFeatures.isEmpty())
                 return
 
+            stateManager = StateManager()
             resolveMembers(classLoader, activeFeatures.map { it::class.java }, *collectables)
 
             for (feature in activeFeatures) {
-                feature.loadFeature(classLoader, context)
+                try {
+                    feature.loadFeature(classLoader, context)
+                } catch (ex: Exception) {
+                    stateManager.addHookAbort(feature, ex)
+                }
             }
         }
 
         fun lateInitAll(classLoader: ClassLoader, activity: Activity) {
-            for (feature in activeFeatures)
-                feature.lateInit(classLoader, activity)
+            for (feature in activeFeatures) {
+                try {
+                    feature.lateInit(classLoader, activity)
+                } catch (e: Exception) {
+                    stateManager.addLateInitAbort(feature, e)
+                }
+            }
         }
 
         /** @return true if unhooks have been performed */
@@ -136,7 +156,8 @@ abstract class FeatureHelper : Feature {
          *                     which allows for dynamically loading in Declarations from JSON Files or other input.
          */
         private fun resolveMembers(classLoader: ClassLoader, features: List<Class<out Feature>>, vararg collectables: CollectableDec) {
-            val cache = HashMap<String, Class<*>>()
+            // Nullable Class means unresolved class, should be skipped for other members of class
+            val cache = HashMap<String, Class<*>?>()
             val test: Predicate<MemberDec> = { memberDec ->
                 memberDec.usedInFeature.any { it in features }
             }
@@ -151,20 +172,37 @@ abstract class FeatureHelper : Feature {
             for (member in members) {
                 val className = member.classDec.className
                 val resolvedClass: Class<*>?
-                if (cache.containsKey(className))
+                if (className in cache) {
                     resolvedClass = cache[className]
+                    if (resolvedClass == null) {
+                        stateManager.addUnresolvedMember(member)
+                        continue // continue if class could not be resolved previously
+                    }
+                }
                 else {
-                    resolvedClass = member.classDec.findClass(classLoader, false)
+                    try {
+                        resolvedClass = member.classDec.findClass(classLoader, false)
+                    } catch (ex: ClassNotFoundException) {
+                        stateManager.addUnresolvedClass(member.classDec, ex)
+                        stateManager.addUnresolvedMember(member)
+                        // Mark as unresolved in caching
+                        cache[className] = null
+                        continue
+                    }
+
                     cache[className] = resolvedClass
                 }
 
-                resolvedClass ?: throw IllegalStateException("Unresolved Class")
-
                 // fixme Explicit "Useless" Cast to Member. Kotlin will otherwise cast to Executable, which is only available in Oreo+
                 @Suppress("USELESS_CAST")
-                resolved[member] = when (member) {
-                    is MethodDec -> member.findMethod(resolvedClass) as Member
-                    is ConstructorDec -> member.findConstructor(resolvedClass) as Member
+                resolved[member] = try {
+                    when (member) {
+                        is MethodDec -> member.findMethod(resolvedClass) as Member
+                        is ConstructorDec -> member.findConstructor(resolvedClass) as Member
+                    }
+                } catch (ex: NoSuchMethodError) {
+                    stateManager.addUnresolvedMember(member, ex)
+                    continue
                 }
             }
             resolvedMembers = resolved.toMap()
