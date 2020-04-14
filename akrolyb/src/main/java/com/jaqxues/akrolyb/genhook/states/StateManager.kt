@@ -1,8 +1,11 @@
 package com.jaqxues.akrolyb.genhook.states
 
 import com.jaqxues.akrolyb.genhook.Feature
+import com.jaqxues.akrolyb.genhook.decs.AddInsField
 import com.jaqxues.akrolyb.genhook.decs.ClassDec
 import com.jaqxues.akrolyb.genhook.decs.MemberDec
+import com.jaqxues.akrolyb.genhook.decs.VariableDec
+import com.jaqxues.akrolyb.utils.associateNotNull
 
 
 /**
@@ -42,6 +45,14 @@ class StateManager {
         aborts[feature::class.java] = AbortSignal.Hooks(ex)
     }
 
+    internal fun addVarError(feature: Feature, dec: VariableDec<*>, ex: Exception) {
+        warnings[feature::class.java] = WarnSignal.UnresolvedVar(dec, ex)
+    }
+
+    internal fun addAddInsFieldError(feature: Feature, dec: AddInsField<*>, ex: Exception) {
+        warnings[feature::class.java] = WarnSignal.AddInsFieldError(dec, ex)
+    }
+
     fun getGlobalState(): State {
         if (aborts.isNotEmpty())
             return State.Aborted(aborts.values + warnings.values + unresolved)
@@ -61,18 +72,23 @@ class StateManager {
 
         if (unresolved.isNotEmpty()) {
             val cls =
-                unresolved.filterIsInstanceTo<WarnSignal.UnresolvedClass, MutableList<WarnSignal.UnresolvedClass>>(
-                    mutableListOf()
-                )
+                unresolved.associateNotNull {
+                    if (it is WarnSignal.UnresolvedClass)
+                        it.dec to (it to false)
+                    else null
+                }
             for (item in unresolved) {
                 if (item is WarnSignal.MemberIssue) {
                     if (item is WarnSignal.UnresolvedMember && item.cause is Cause.Class) {
-                        val clazz = cls.find { item.member.classDec == it.dec }
+                        val clsDec = item.member.classDec
+                        val cause = cls[clsDec]
                             ?: error("Could not find Unresolved Class that caused an Unresolved Method")
-                        cls.remove(clazz)
+                        if (!cause.second)
+                            cls[clsDec] = cause.copy(second = true)
                         item.member.usedInFeature.forEach {
                             val list = (reasonMap[it] ?: error("Unknown Feature in Unresolved Method Signal"))
-                            list.add(clazz)
+                            if (cause.first !in list)
+                                list.add(cause.first)
                             list.add(item)
                         }
                     } else {
@@ -82,7 +98,7 @@ class StateManager {
                     }
                 }
             }
-            check(cls.isEmpty()) { "Unresolved Classes without matching" }
+            check(cls.values.all { (_, v) -> v }) { "Unresolved Classes without matching" }
         }
 
         for ((k, v) in aborts) {

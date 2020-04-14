@@ -2,10 +2,10 @@ package com.jaqxues.akrolyb.genhook
 
 import android.app.Activity
 import android.content.Context
-import com.jaqxues.akrolyb.genhook.decs.MemberDec
+import com.jaqxues.akrolyb.genhook.decs.*
 import com.jaqxues.akrolyb.genhook.decs.MemberDec.ConstructorDec
 import com.jaqxues.akrolyb.genhook.decs.MemberDec.MethodDec
-import com.jaqxues.akrolyb.genhook.states.*
+import com.jaqxues.akrolyb.genhook.states.ClassNotFoundException
 import com.jaqxues.akrolyb.genhook.states.StateManager
 import com.jaqxues.akrolyb.utils.CollectableDec
 import com.jaqxues.akrolyb.utils.Predicate
@@ -28,10 +28,11 @@ abstract class FeatureHelper : Feature {
         return try {
             // obj == null -> invoke Static Method, must be resolved
             if (obj == null || resolvedMembers.containsKey(method) &&
-                    // Inheritance, call method on child
-                    obj.javaClass.name == method.classDec.className) {
+                // Inheritance, call method on child
+                obj.javaClass.name == method.classDec.className
+            ) {
                 (resolvedMembers[method] as? Method ?: throw AssertionError("Method not resolved"))
-                        .invoke(obj, *params)
+                    .invoke(obj, *params)
             } else {
                 XposedHelpers.callMethod(obj, method.methodName, *params)
             }
@@ -59,7 +60,8 @@ abstract class FeatureHelper : Feature {
             XposedBridge.hookAllMethods(
                 XposedHelpers.findClass(methodDec.classDec.className, classLoader),
                 methodDec.methodName,
-                hook).addToUnhooks()
+                hook
+            ).addToUnhooks()
         }
     }
 
@@ -94,10 +96,100 @@ abstract class FeatureHelper : Feature {
         try {
             action()
         } catch (e: Exception) {
-            stateManager.addHookError(dec, this, e)
             Timber.e(e)
+            stateManager.addHookError(dec, this, e)
         }
     }
+
+
+    // - - - - - - - - VariableDec Methods
+
+    protected fun <T> VariableDec<T>.setStaticVar(clazz: Class<*>, value: T) {
+        tryVar {
+            XposedHelpers.setStaticObjectField(clazz, this.name, checkVal { value })
+        }
+    }
+
+    protected fun <T> VariableDec<T>.getStaticVar(clazz: Class<*>) =
+        tryVar {
+            checkVal { XposedHelpers.getStaticObjectField(clazz, name) as T }
+        }
+
+    protected fun <T> VariableDec<T>.setVar(obj: Any, value: T) {
+        tryVar {
+            XposedHelpers.setObjectField(obj, name, checkVal { value })
+        }
+    }
+
+    protected fun <T> VariableDec<T>.getVar(obj: Any) =
+        tryVar {
+            checkVal { XposedHelpers.getObjectField(obj, name) as T }
+        }
+
+    // Convenience Methods
+    protected fun <T> VariableDec<T>.setStaticVar(classDec: ClassDec, classLoader: ClassLoader, value: T) {
+        tryVar { setStaticVar(classDec.findClass(classLoader), value) }
+    }
+
+    protected fun <T> VariableDec<T>.getStaticVar(classDec: ClassDec, classLoader: ClassLoader) =
+        tryVar {
+            getStaticVar(classDec.findClass(classLoader))
+        }
+
+    private inline fun <T> VariableDec<T>.checkVal(value: () -> T): T =
+        if (nullable) value() else (value()
+            ?: throw NullPointerException("Value of VariableDec defined as non-nullable, but received null value"))
+
+    private inline fun <T> VariableDec<*>.tryVar(action: () -> T?): T? {
+        return try {
+            action()
+        } catch (ex: Exception) {
+            Timber.e(ex)
+            stateManager.addVarError(this@FeatureHelper, this, ex)
+            null
+        }
+    }
+
+
+    // - - - - - - - - VariableDec Methods
+
+    /**
+     * @return The previously stored value for this instance/key combination, or null if there was none.
+     */
+    // === Additional Fields on Objects ==
+    fun <T> AddInsField<T>.set(obj: Any, value: T?) =
+        tryAddInsField { XposedHelpers.setAdditionalInstanceField(obj, id, value) as T? }
+
+    fun <T> AddInsField<T>.get(obj: Any) =
+        tryAddInsField { XposedHelpers.getAdditionalInstanceField(obj, id) as T? }
+
+    // === Static Additional Fields ==
+    fun <T> AddInsField<T>.get(clazz: Class<*>) =
+        tryAddInsField { XposedHelpers.getAdditionalStaticField(clazz, id) as T? }
+
+    /**
+     * @return The previously stored value for this instance/key combination, or null if there was none.
+     */
+    fun <T> AddInsField<T>.set(clazz: Class<*>, value: T?) =
+        tryAddInsField { XposedHelpers.setAdditionalStaticField(clazz, id, value) as T? }
+
+    // Convenience methods
+    fun <T> AddInsField<T>.get(classDec: ClassDec, classLoader: ClassLoader) =
+        get(classDec.findClass(classLoader))
+
+    fun <T> AddInsField<T>.set(classDec: ClassDec, classLoader: ClassLoader, value: T?) =
+        set(classDec.findClass(classLoader), value)
+
+    private inline fun <T> AddInsField<T>.tryAddInsField(action: () -> T?): T? {
+        return try {
+            action()
+        } catch (ex: Exception) {
+            Timber.e(ex)
+            stateManager.addAddInsFieldError(this@FeatureHelper, this, ex)
+            null
+        }
+    }
+
 
     internal companion object {
         private lateinit var resolvedMembers: Map<MemberDec, Member>
@@ -105,7 +197,12 @@ abstract class FeatureHelper : Feature {
         private lateinit var activeFeatures: List<Feature>
         private lateinit var stateManager: StateManager
 
-        fun loadAll(classLoader: ClassLoader, context: Context, featureManager: FeatureManager, vararg collectables: CollectableDec) {
+        fun loadAll(
+            classLoader: ClassLoader,
+            context: Context,
+            featureManager: FeatureManager,
+            vararg collectables: CollectableDec
+        ) {
             check(unhookMap.isEmpty()) { "Some Features already loaded" }
 
             activeFeatures = featureManager.getActiveFeatures()
@@ -155,7 +252,11 @@ abstract class FeatureHelper : Feature {
          * @param collectables Implemented ability to load Declarations either from static objects and from objects,
          *                     which allows for dynamically loading in Declarations from JSON Files or other input.
          */
-        private fun resolveMembers(classLoader: ClassLoader, features: List<Class<out Feature>>, vararg collectables: CollectableDec) {
+        private fun resolveMembers(
+            classLoader: ClassLoader,
+            features: List<Class<out Feature>>,
+            vararg collectables: CollectableDec
+        ) {
             // Nullable Class means unresolved class, should be skipped for other members of class
             val cache = HashMap<String, Class<*>?>()
             val test: Predicate<MemberDec> = { memberDec ->
@@ -165,7 +266,10 @@ abstract class FeatureHelper : Feature {
             val members: List<MemberDec> = collectables.flatMap { collectable ->
                 when (collectable) {
                     is CollectableDec.Class -> collectable.value.collectAll(test = test)
-                    is CollectableDec.Object -> collectable.value::class.collectAll(obj = collectable.value, test = test)
+                    is CollectableDec.Object -> collectable.value::class.collectAll(
+                        obj = collectable.value,
+                        test = test
+                    )
                 }
             }
             val resolved = mutableMapOf<MemberDec, Member>()
@@ -178,8 +282,7 @@ abstract class FeatureHelper : Feature {
                         stateManager.addUnresolvedMember(member)
                         continue // continue if class could not be resolved previously
                     }
-                }
-                else {
+                } else {
                     try {
                         resolvedClass = member.classDec.findClass(classLoader, false)
                     } catch (ex: ClassNotFoundException) {
@@ -193,13 +296,8 @@ abstract class FeatureHelper : Feature {
                     cache[className] = resolvedClass
                 }
 
-                // fixme Explicit "Useless" Cast to Member. Kotlin will otherwise cast to Executable, which is only available in Oreo+
-                @Suppress("USELESS_CAST")
                 resolved[member] = try {
-                    when (member) {
-                        is MethodDec -> member.findMethod(resolvedClass) as Member
-                        is ConstructorDec -> member.findConstructor(resolvedClass) as Member
-                    }
+                    member.findMember(resolvedClass)
                 } catch (ex: NoSuchMethodError) {
                     stateManager.addUnresolvedMember(member, ex)
                     continue

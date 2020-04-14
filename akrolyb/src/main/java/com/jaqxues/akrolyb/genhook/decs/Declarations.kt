@@ -3,6 +3,7 @@ package com.jaqxues.akrolyb.genhook.decs
 import com.jaqxues.akrolyb.genhook.Feature
 import de.robv.android.xposed.XposedHelpers
 import java.lang.reflect.Constructor
+import java.lang.reflect.Member
 import java.lang.reflect.Method
 
 
@@ -47,15 +48,15 @@ sealed class MemberDec(
         override vararg val params: Any
     ) : MemberDec(classDec, usedInFeature, params) {
         fun findConstructor(resolvedClass: Class<*>): Constructor<*> =
-                XposedHelpers.findConstructorExact(
-                        resolvedClass,
-                        *params.map {
-                            if (it is ClassDec)
-                                it.className
-                            else
-                                it
-                        }.toTypedArray()
-                )
+            XposedHelpers.findConstructorExact(
+                resolvedClass,
+                *params.map {
+                    if (it is ClassDec)
+                        it.className
+                    else
+                        it
+                }.toTypedArray()
+            )
     }
 
     class MethodDec(
@@ -66,84 +67,31 @@ sealed class MemberDec(
     ) : MemberDec(classDec, usedInFeature, params) {
         fun findMethod(resolvedClass: Class<*>): Method {
             return XposedHelpers.findMethodExact(
-                    resolvedClass,
-                    methodName,
-                    *params.map {
-                        if (it is ClassDec)
-                            it.className
-                        else
-                            it
-                    }.toTypedArray()
+                resolvedClass,
+                methodName,
+                *params.map {
+                    if (it is ClassDec)
+                        it.className
+                    else
+                        it
+                }.toTypedArray()
             )
         }
     }
 
+    // fixme Explicit "Useless" Cast to Member. Kotlin will otherwise cast to Executable, which is only available in Oreo+
+    @Suppress("USELESS_CAST")
     fun findMember(clazz: Class<*>) =
-            when (this) {
-                is ConstructorDec -> findConstructor(clazz)
-                is MethodDec -> findMethod(clazz)
-            }
+        when (this) {
+            is ConstructorDec -> findConstructor(clazz) as Member
+            is MethodDec -> findMethod(clazz) as Member
+        }
 }
 
 inline fun <reified T> VariableDec(name: String) = VariableDec<T>(name, null is T)
 
-@Suppress("UNCHECKED_CAST", "UNUSED", "MemberVisibilityCanBePrivate")
-class VariableDec<T>(val name: String, val nullable: Boolean) {
-    fun setStaticVar(clazz: Class<*>, value: T) {
-        XposedHelpers.setStaticObjectField(clazz, name, checkVal { value })
-    }
+class VariableDec<T>(val name: String, val nullable: Boolean)
 
-    fun getStaticVar(clazz: Class<*>) =
-            checkVal { XposedHelpers.getStaticObjectField(clazz, name) as T }
-
-
-    fun setVar(obj: Any, value: T) {
-        XposedHelpers.setObjectField(obj, name, checkVal { value })
-    }
-
-    fun getVar(obj: Any) =
-            checkVal { XposedHelpers.getObjectField(obj, name) as T }
-
-    // Convenience Methods
-    fun setStaticVar(classDec: ClassDec, classLoader: ClassLoader, value: T) {
-        setStaticVar(classDec.findClass(classLoader), checkVal { value })
-    }
-    fun getStaticVar(classDec: ClassDec, classLoader: ClassLoader) =
-            checkVal { getStaticVar(classDec.findClass(classLoader)) }
-
-    private inline fun <T> checkVal(value: () -> T): T =
-            if (nullable) value() else (value() ?:
-            throw NullPointerException("Value of VariableDec defined as non-nullable, but received null value"))
-}
-
-@Suppress("UNCHECKED_CAST")
 class AddInsField<T> {
-
-    // === Additional Fields on Objects ==
-    /**
-     * @return The previously stored value for this instance/key combination, or null if there was none.
-     */
-    fun set(obj: Any, value: T?) =
-            XposedHelpers.setAdditionalInstanceField(obj, toString(), value) as T?
-
-    fun get(obj: Any) =
-            XposedHelpers.getAdditionalInstanceField(obj, toString()) as T?
-
-    // === Static Additional Fields ==
-    fun get(clazz: Class<*>) =
-            XposedHelpers.getAdditionalStaticField(clazz, toString()) as T?
-
-    /**
-     * @return The previously stored value for this instance/key combination, or null if there was none.
-     */
-    fun set(clazz: Class<*>, value: T?) =
-            XposedHelpers.setAdditionalStaticField(clazz, toString(), value) as T?
-
-
-    // Convenience methods
-    fun get(classDec: ClassDec, classLoader: ClassLoader) =
-            get(classDec.findClass(classLoader))
-
-    fun set(classDec: ClassDec, classLoader: ClassLoader, value: T?) =
-            set(classDec.findClass(classLoader), value)
+    val id get() = toString()
 }

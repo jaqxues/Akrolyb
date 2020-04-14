@@ -1,7 +1,9 @@
 package com.jaqxues.akrolyb.genhook.states
 
+import com.jaqxues.akrolyb.genhook.decs.AddInsField
 import com.jaqxues.akrolyb.genhook.decs.ClassDec
 import com.jaqxues.akrolyb.genhook.decs.MemberDec
+import com.jaqxues.akrolyb.genhook.decs.VariableDec
 import de.robv.android.xposed.XposedHelpers
 
 
@@ -25,6 +27,8 @@ sealed class WarnSignal : StateReason() {
     data class UnresolvedMember(override val member: MemberDec, val cause: Cause) : WarnSignal(), MemberIssue
     data class MethodCallError(override val member: MemberDec, val ex: Exception): WarnSignal(), MemberIssue
     data class MethodHookError(override val member: MemberDec, val ex: Exception): WarnSignal(), MemberIssue
+    data class UnresolvedVar(val dec: VariableDec<*>, val ex: Exception): WarnSignal()
+    data class AddInsFieldError(val addInsField: AddInsField<*>, val ex: Exception): WarnSignal()
 
     interface MemberIssue {
         val member: MemberDec
