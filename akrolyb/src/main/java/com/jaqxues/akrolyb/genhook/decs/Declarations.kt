@@ -19,7 +19,7 @@ open class ClassDec(val className: String) {
     /**
      * Find Classes by ClassDec and ClassLoader.
      *
-     * Caching is disabled while initializing Members. [com.marz.instaprefs.xposed.FeatureHelper] has its own little
+     * Caching is disabled while initializing Members. [com.jaqxues.akrolyb.genhook.FeatureHelper] has its own little
      * caching. This functionality is reserved for actions that require Classes after resolving Methods, such as
      * accessing Additional Static Fields or "Regular" Static Fields
      *
