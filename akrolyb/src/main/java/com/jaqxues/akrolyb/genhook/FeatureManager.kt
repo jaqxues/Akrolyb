@@ -2,9 +2,6 @@ package com.jaqxues.akrolyb.genhook
 
 import android.app.Activity
 import android.content.Context
-import com.jaqxues.akrolyb.prefs.getPref
-import com.jaqxues.akrolyb.prefs.minusAssign
-import com.jaqxues.akrolyb.prefs.plusAssign
 import com.jaqxues.akrolyb.utils.CollectableDec
 import kotlin.reflect.KClass
 
@@ -18,11 +15,11 @@ class FeatureManager(featureProvider: FeatureProvider) {
     private val optionalFeatures = featureProvider.optionalFeatures
     private val featureNames = forcedFeatures + optionalFeatures
     private val reversedFeatureMap = featureNames.map { (k, v) -> v.java.canonicalName!! to k }.toMap()
-    private val disabledFeaturesPref = featureProvider.disabledFeaturesPref
+    private val disabledFeatures = featureProvider.disabledFeatures
 
 
     fun getActiveFeatures(): List<Feature> {
-        val disabled = disabledFeaturesPref.getPref()
+        val disabled = disabledFeatures.list
         val activeOptionals = optionalFeatures.mapNotNull { (name, clazz) ->
             if (disabled.contains(name)) null else clazz
         }
@@ -51,7 +48,7 @@ class FeatureManager(featureProvider: FeatureProvider) {
 
     fun isFeatureEnabled(key: String): Boolean {
         checkOptionalFeatureKey(key)
-        return key !in disabledFeaturesPref.getPref()
+        return key !in disabledFeatures.list
     }
 
     fun toggleFeature(featureClass: KClass<out Feature>, active: Boolean) {
@@ -69,9 +66,9 @@ class FeatureManager(featureProvider: FeatureProvider) {
 
     private fun togglePref(key: String, active: Boolean) {
         if (active)
-            disabledFeaturesPref -= key
+            disabledFeatures.enable(key)
         else {
-            disabledFeaturesPref += key
+            disabledFeatures.disable(key)
         }
     }
 
