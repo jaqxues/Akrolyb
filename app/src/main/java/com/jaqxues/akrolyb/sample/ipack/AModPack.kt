@@ -1,5 +1,6 @@
 package com.jaqxues.akrolyb.sample.ipack
 
+import android.content.Context
 import androidx.fragment.app.Fragment
 import com.jaqxues.akrolyb.pack.ModPack
 
@@ -11,4 +12,5 @@ import com.jaqxues.akrolyb.pack.ModPack
 abstract class AModPack(metadata: AMetadata) : ModPack<AMetadata>(metadata) {
     abstract fun <T> customMethods(): T
     abstract fun getFragments(): Array<Fragment>
+    abstract fun showSuccessToast(context: Context)
 }
