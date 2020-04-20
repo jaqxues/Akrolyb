@@ -1,6 +1,8 @@
 package com.jaqxues.akrolyb.pack
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
+import androidx.core.content.pm.PackageInfoCompat
 import com.jaqxues.akrolyb.genhook.FeatureManager
 import dalvik.system.DexClassLoader
 import timber.log.Timber
@@ -29,6 +31,7 @@ abstract class ModPack<T : PackMetadata>(private val metadata: T) {
             certificate: X509Certificate? = null,
             buildMeta: Attributes.(Context, File) -> T
         ): M {
+            Timber.plant(Timber.DebugTree())
             if (!packFile.exists()) throw PackNotFoundException(packFile)
 
             val attributes = try {
@@ -50,8 +53,17 @@ abstract class ModPack<T : PackMetadata>(private val metadata: T) {
                 throw PackMetadataException(t)
             }
 
-            val packAttributes = try {
-                attributes.buildMeta(context, packFile)
+            val metadata: T
+            try {
+                metadata = attributes.buildMeta(context, packFile)
+
+                // Performing Basic Checks
+                val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+                if (metadata.devPack && 0 == context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE)
+                    throw IllegalStateException("Developer Pack with non-debuggable Apk")
+                if (metadata.minApkVersionCode > PackageInfoCompat.getLongVersionCode(packageInfo))
+                    throw IllegalStateException("Pack requires newer Apk")
+
             } catch (t: Throwable) {
                 Timber.e(t)
                 throw PackAttributesException(t)
@@ -72,13 +84,13 @@ abstract class ModPack<T : PackMetadata>(private val metadata: T) {
 
 
             return try {
-                val clazz = classLoader.loadClass(packAttributes.packImplClass) as Class<out M>
-                val constructor = clazz.getConstructor(packAttributes.javaClass)
+                val clazz = classLoader.loadClass(metadata.packImplClass) as Class<out M>
+                val constructor = clazz.getConstructor(metadata.javaClass)
 
-                constructor.newInstance(packAttributes) as M
+                constructor.newInstance(metadata) as M
             } catch (t: Throwable) {
                 val message = when (t) {
-                    is ClassNotFoundException -> "Pack Implementation Class (${packAttributes.packImplClass}) not found"
+                    is ClassNotFoundException -> "Pack Implementation Class (${metadata.packImplClass}) not found"
                     is NoSuchMethodException -> "Matching constructor not found."
                     is InvocationTargetException -> "Pack Constructor Invocation failed"
                     else -> "Unknown Error while instantiating Pack"

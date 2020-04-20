@@ -1,5 +1,7 @@
 package com.jaqxues.akrolyb.pack
 
+import java.util.jar.Attributes
+
 
 /**
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Akrolyb.<br>
@@ -9,7 +11,6 @@ interface PackMetadata {
     val devPack: Boolean
     val packVersion: String
     val packVersionCode: Int
-    val flavour: String
     val packImplClass: String
-    val minApkVersionCode: Int
+    val minApkVersionCode: Long
 }
