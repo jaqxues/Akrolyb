@@ -39,4 +39,6 @@ dependencies {
     compileOnly 'de.robv.android.xposed:api:82:sources'
 }
 
+// Use Akrolyb Gradle configuration from Sample App
+//apply from: 'https://raw.githubusercontent.com/jaqxues/Akrolyb/master/app/packconfig.gradle'
 apply from: 'packconfig.gradle'
