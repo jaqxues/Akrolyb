@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.jaqxues.akrolyb.pack.ModPack
+import com.jaqxues.akrolyb.pack.PackException
 import com.jaqxues.akrolyb.prefs.PrefManager
 import com.jaqxues.akrolyb.sample.ipack.AMetadata
 import com.jaqxues.akrolyb.sample.ipack.AModPack
@@ -35,7 +36,7 @@ class MainActivity : AppCompatActivity() {
         } else init()
     }
 
-    fun init() {
+    private fun init() {
         // Make sure App has permissions to read/write to external Storage
         init_pref_btn.setOnClickListener {
             PrefManager.init(
@@ -44,10 +45,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         init_pack_btn.setOnClickListener {
-            val pack = ModPack.buildPack<AMetadata, AModPack>(
-                this,
-                File(Environment.getExternalStorageDirectory(), "CompiledModPack.jar_unsigned.jar"), null, Attributes::toPackMetadata)
-            pack.showSuccessToast(this)
+            val packFile = File(Environment.getExternalStorageDirectory(), "CompiledModPack.jar_unsigned.jar")
+            if (packFile.exists()) {
+                try {
+                    val pack = ModPack.buildPack<AMetadata, AModPack>(
+                        this, packFile, null, Attributes::toPackMetadata
+                    )
+                    pack.showSuccessToast(this)
+                } catch (t: PackException) {
+                    Toast.makeText(this, "${t::class.java.simpleName}: ${t.message}", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                Toast.makeText(this, "Pack does not exist", Toast.LENGTH_LONG).show()
+            }
         }
     }
 

@@ -63,6 +63,10 @@ abstract class ModPack<T : PackMetadata>(private val metadata: T) {
                     throw IllegalStateException("Developer Pack with non-debuggable Apk")
                 if (metadata.minApkVersionCode > PackageInfoCompat.getLongVersionCode(packageInfo))
                     throw IllegalStateException("Pack requires newer Apk")
+                try {
+                    ModPack::class.java.classLoader!!.loadClass(metadata.packImplClass)
+                    throw IllegalStateException("Detected Pack in Classloader")
+                } catch (ignored: ClassNotFoundException) {}
 
             } catch (t: Throwable) {
                 Timber.e(t)
