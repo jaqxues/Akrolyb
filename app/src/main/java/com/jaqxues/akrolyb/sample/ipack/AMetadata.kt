@@ -2,6 +2,7 @@ package com.jaqxues.akrolyb.sample.ipack
 
 import android.content.Context
 import com.jaqxues.akrolyb.pack.PackMetadata
+import org.w3c.dom.Attr
 import java.io.File
 import java.util.jar.Attributes
 
@@ -15,20 +16,21 @@ class AMetadata(
     override val packVersion: String,
     override val packVersionCode: Int,
     override val packImplClass: String,
-    override val minApkVersionCode: Long
+    override val minApkVersionCode: Int
 ) : PackMetadata
+{
+    companion object {
+        fun toPackMetadata(attributes: Attributes, context: Context, file: File): AMetadata {
+            fun safeGetValue(name: String) =
+                attributes.getValue(name) ?: throw IllegalStateException("Pack did not include \"$name\" Attribute")
 
-fun Attributes.toPackMetadata(context: Context, file: File): AMetadata {
-    fun safeGetValue(name: String) =
-        getValue(name) ?: throw IllegalStateException("Pack did not include \"$name\" Attribute")
+            val devPack = safeGetValue("Development").equals("true", false)
+            val packImpl = safeGetValue("PackImpl")
+            val packVersionCode = safeGetValue("PackVersionCode").toInt()
+            val packVersion = safeGetValue("PackVersion")
+            val minApkVersion = safeGetValue("MinApkVersionCode").toInt()
 
-    val devPack = safeGetValue("Development").equals("true", false)
-    val packImpl = safeGetValue("PackImpl")
-    val packVersionCode = safeGetValue("PackVersionCode").toInt()
-    val packVersion = safeGetValue("PackVersion")
-    val minApkVersion = safeGetValue("MinApkVersionCode").toLong()
-
-    // Perform custom checks if Pack should be loaded
-
-    return AMetadata(devPack, packVersion, packVersionCode, packImpl, minApkVersion)
+            return AMetadata(devPack, packVersion, packVersionCode, packImpl, minApkVersion)
+        }
+    }
 }

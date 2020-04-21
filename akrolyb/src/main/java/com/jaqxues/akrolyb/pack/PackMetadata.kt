@@ -12,5 +12,5 @@ interface PackMetadata {
     val packVersion: String
     val packVersionCode: Int
     val packImplClass: String
-    val minApkVersionCode: Long
+    val minApkVersionCode: Int
 }

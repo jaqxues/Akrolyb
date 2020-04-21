@@ -10,7 +10,6 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.lang.reflect.InvocationTargetException
 import java.security.cert.X509Certificate
-import java.util.jar.Attributes
 import java.util.jar.JarFile
 
 
@@ -29,7 +28,7 @@ abstract class ModPack<T : PackMetadata>(private val metadata: T) {
             context: Context,
             packFile: File,
             certificate: X509Certificate? = null,
-            buildMeta: Attributes.(Context, File) -> T
+            packBuilder: PackFactory<T>
         ): M {
             Timber.plant(Timber.DebugTree())
             if (!packFile.exists()) throw PackNotFoundException(packFile)
@@ -55,19 +54,14 @@ abstract class ModPack<T : PackMetadata>(private val metadata: T) {
 
             val metadata: T
             try {
-                metadata = attributes.buildMeta(context, packFile)
+                metadata = packBuilder.buildMeta(attributes, context, packFile)
 
-                // Performing Basic Checks
-                val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-                if (metadata.devPack && 0 == context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE)
-                    throw IllegalStateException("Developer Pack with non-debuggable Apk")
-                if (metadata.minApkVersionCode > PackageInfoCompat.getLongVersionCode(packageInfo))
-                    throw IllegalStateException("Pack requires newer Apk")
                 try {
                     ModPack::class.java.classLoader!!.loadClass(metadata.packImplClass)
                     throw IllegalStateException("Detected Pack in Classloader")
                 } catch (ignored: ClassNotFoundException) {}
 
+                packBuilder.performChecks(metadata)
             } catch (t: Throwable) {
                 Timber.e(t)
                 throw PackAttributesException(t)

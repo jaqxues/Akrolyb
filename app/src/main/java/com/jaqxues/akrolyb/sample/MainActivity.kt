@@ -14,11 +14,10 @@ import com.jaqxues.akrolyb.pack.PackException
 import com.jaqxues.akrolyb.prefs.PrefManager
 import com.jaqxues.akrolyb.sample.ipack.AMetadata
 import com.jaqxues.akrolyb.sample.ipack.AModPack
-import com.jaqxues.akrolyb.sample.ipack.toPackMetadata
+import com.jaqxues.akrolyb.sample.ipack.APackFactory
 import com.jaqxues.akrolyb.sample.prefs.Preferences
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
-import java.util.jar.Attributes
 
 private const val PERM_REQ_CODE = 0xcafe
 class MainActivity : AppCompatActivity() {
@@ -49,7 +48,7 @@ class MainActivity : AppCompatActivity() {
             if (packFile.exists()) {
                 try {
                     val pack = ModPack.buildPack<AMetadata, AModPack>(
-                        this, packFile, null, Attributes::toPackMetadata
+                        this, packFile, null, APackFactory
                     )
                     pack.showSuccessToast(this)
                 } catch (t: PackException) {
