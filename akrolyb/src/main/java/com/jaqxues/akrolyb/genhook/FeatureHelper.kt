@@ -25,21 +25,21 @@ import kotlin.reflect.KClass
  */
 abstract class FeatureHelper : Feature {
     protected fun callMethod(obj: Any?, method: MethodDec, vararg params: Any?): Any? {
-        return try {
+        try {
             // obj == null -> invoke Static Method, must be resolved
             if (obj == null || resolvedMembers.containsKey(method) &&
                 // Inheritance, call method on child
                 obj.javaClass.name == method.classDec.className
             ) {
-                (resolvedMembers[method] as? Method ?: throw AssertionError("Method not resolved"))
+                return (resolvedMembers[method] as? Method ?: throw AssertionError("Method not resolved"))
                     .invoke(obj, *params)
             } else {
-                XposedHelpers.callMethod(obj, method.methodName, *params)
+                return XposedHelpers.callMethod(obj, method.methodName, *params)
             }
         } catch (ex: Exception) {
             Timber.e(ex)
             stateManager.addCallError(this, method, ex)
-            null
+            return null
         }
     }
 
@@ -66,10 +66,14 @@ abstract class FeatureHelper : Feature {
     }
 
     protected fun newInstance(constructorDec: ConstructorDec, vararg params: Any?): Any? {
-        return tryHook(constructorDec) {
-            (resolvedMembers[constructorDec] as? Constructor<*>
+        try {
+            return (resolvedMembers[constructorDec] as? Constructor<*>
                 ?: throw AssertionError("Constructor not resolved"))
                 .newInstance(*params)
+        } catch (e: Exception) {
+            Timber.e(e)
+            stateManager.addHookError(constructorDec, this, e)
+            return null
         }
     }
 
