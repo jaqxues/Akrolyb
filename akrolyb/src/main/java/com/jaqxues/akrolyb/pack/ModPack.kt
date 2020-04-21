@@ -55,12 +55,6 @@ abstract class ModPack<T : PackMetadata>(private val metadata: T) {
             val metadata: T
             try {
                 metadata = packBuilder.buildMeta(attributes, context, packFile)
-
-                try {
-                    ModPack::class.java.classLoader!!.loadClass(metadata.packImplClass)
-                    throw IllegalStateException("Detected Pack in Classloader")
-                } catch (ignored: ClassNotFoundException) {}
-
                 packBuilder.performChecks(metadata)
             } catch (t: Throwable) {
                 Timber.e(t)
@@ -79,7 +73,6 @@ abstract class ModPack<T : PackMetadata>(private val metadata: T) {
                 Timber.e(t)
                 throw PackClassLoaderException(t)
             }
-
 
             return try {
                 val clazz = classLoader.loadClass(metadata.packImplClass) as Class<out M>

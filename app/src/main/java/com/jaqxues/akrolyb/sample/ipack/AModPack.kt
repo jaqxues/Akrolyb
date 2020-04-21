@@ -20,11 +20,10 @@ abstract class AModPack(metadata: AMetadata) : ModPack<AMetadata>(metadata) {
     abstract fun showSuccessToast(context: Context)
 }
 
-object APackFactory: PackFactory<AMetadata> {
+object APackFactory: PackFactory<AMetadata>() {
+    override val appData: AppData
+        get() = AppData(BuildConfig.VERSION_CODE, BuildConfig.DEBUG, BuildConfig.APPLICATION_ID, BuildConfig.FLAVOR)
+
     override fun buildMeta(attributes: Attributes, context: Context, file: File) =
         AMetadata.toPackMetadata(attributes, context, file)
-
-    override fun performChecks(packMetadata: AMetadata) {
-        PackFactory.performBasicChecks(packMetadata, AppData(BuildConfig.VERSION_CODE, BuildConfig.DEBUG))
-    }
 }

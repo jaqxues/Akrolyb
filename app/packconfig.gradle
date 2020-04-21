@@ -1,7 +1,7 @@
 def createPackFolder() {
     def packFolder = file("./src/pack/java")
     if (!packFolder.exists()) {
-        println "Creating PackFolder"
+        println "Creating \"src/pack/java\" to create pack flavor"
         packFolder.mkdirs()
     }
 }

@@ -1,6 +1,7 @@
 package com.jaqxues.akrolyb.pack
 
 import android.content.Context
+import androidx.annotation.CallSuper
 import com.jaqxues.akrolyb.BuildConfig
 import java.io.File
 import java.util.jar.Attributes
@@ -10,20 +11,29 @@ import java.util.jar.Attributes
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Akrolyb.<br>
  * Date: 21.04.20 - Time 11:29.
  */
-interface PackFactory<T: PackMetadata> {
-    fun buildMeta(attributes: Attributes, context: Context, file: File): T
+abstract class PackFactory<T: PackMetadata> {
+    abstract val appData: AppData
+    abstract fun buildMeta(attributes: Attributes, context: Context, file: File): T
 
-    fun performChecks(packMetadata: T)
+    @CallSuper
+    open fun performChecks(packMetadata: T) {
+        performBasicChecks(packMetadata)
+    }
 
-    companion object {
-        fun <T: PackMetadata> performBasicChecks(packMetadata: T, data: AppData) {
-            // Performing Basic Checks
-            if (packMetadata.devPack && !data.debug)
-                throw IllegalStateException("Developer Pack with non-debuggable Apk")
-            if (packMetadata.minApkVersionCode > data.versionCode)
-                throw IllegalStateException("Pack requires newer Apk")
-        }
+    open fun performBasicChecks(packMetadata: T) {
+        val data = appData
+        // Performing Basic Checks
+        if (packMetadata.devPack && !data.debug)
+            throw IllegalStateException("Developer Pack with non-debuggable Apk")
+        if (packMetadata.minApkVersionCode > data.versionCode)
+            throw IllegalStateException("Pack requires newer Apk")
+        if (data.appId.endsWith(".pack") || data.flavor == "pack")
+            throw IllegalStateException("Detected Pack Flavor as current APK Build")
+        try {
+            ModPack::class.java.classLoader!!.loadClass(packMetadata.packImplClass)
+            throw IllegalStateException("Detected Pack in Classloader")
+        } catch (ignored: ClassNotFoundException) {}
     }
 }
 
-data class AppData(val versionCode: Int, val debug: Boolean)
+data class AppData(val versionCode: Int, val debug: Boolean, val appId: String, val flavor: String)
