@@ -1,6 +1,10 @@
 package com.jaqxues.akrolyb.utils
 
+import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.AssetManager
+import android.os.Build
+import java.io.ByteArrayInputStream
 import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
@@ -66,6 +70,24 @@ object Security {
                 .generateCertificate(it) as X509Certificate
         }
     }
+
+    fun certificateFromApk(context: Context, packageName: String) =
+        CertificateFactory.getInstance("X.509")
+            .generateCertificate(
+                ByteArrayInputStream(
+                    context.packageManager.let {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            it.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+                                .signingInfo
+                                .apkContentsSigners
+                        } else {
+                            @Suppress("DEPRECATION")
+                            it.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+                                .signatures
+                        }[0].toByteArray()
+                    }
+                )
+            ) as X509Certificate
 }
 
 
@@ -77,15 +99,20 @@ object Security {
 fun Array<Certificate>.getSingleChains() = sequence {
     val certs = this@getSingleChains
     var startIdx = 0
-    while (startIdx < size - 1) {
-        var i = startIdx
-        // Loop through the chain until the next certificate is not the issuer of the current certificate.
-        while (i < size - 1) {
-            if ((certs[i + 1] as X509Certificate).subjectX500Principal != (certs[i] as X509Certificate).issuerX500Principal)
-                break
-            i++
+    while (startIdx < size) {
+        if (startIdx == size - 1) {
+            yield(arrayOf(this@getSingleChains[startIdx]))
+            startIdx += 1
+        } else {
+            var i = startIdx
+            // Loop through the chain until the next certificate is not the issuer of the current certificate.
+            while (i < size - 1) {
+                if ((certs[i + 1] as X509Certificate).subjectX500Principal != (certs[i] as X509Certificate).issuerX500Principal)
+                    break
+                i++
+            }
+            yield(sliceArray(startIdx..i))
+            startIdx += i
         }
-        yield(sliceArray(startIdx..i))
-        startIdx += i
     }
 }

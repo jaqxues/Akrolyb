@@ -16,19 +16,32 @@ import com.jaqxues.akrolyb.sample.ipack.AMetadata
 import com.jaqxues.akrolyb.sample.ipack.AModPack
 import com.jaqxues.akrolyb.sample.ipack.APackFactory
 import com.jaqxues.akrolyb.sample.prefs.Preferences
+import com.jaqxues.akrolyb.utils.Security
 import kotlinx.android.synthetic.main.activity_main.*
+import java.io.ByteArrayInputStream
 import java.io.File
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 
 private const val PERM_REQ_CODE = 0xcafe
+
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             val listener = View.OnClickListener {
-                ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), PERM_REQ_CODE)
+                ActivityCompat.requestPermissions(
+                    this@MainActivity,
+                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    PERM_REQ_CODE
+                )
             }
             init_pref_btn.setOnClickListener(listener)
             init_pack_btn.setOnClickListener(listener)
@@ -39,16 +52,17 @@ class MainActivity : AppCompatActivity() {
         // Make sure App has permissions to read/write to external Storage
         init_pref_btn.setOnClickListener {
             PrefManager.init(
-                File(Environment.getExternalStorageDirectory(), "SomeFile.json"), Preferences::class
+                File(Environment.getExternalStorageDirectory(), "Akrolyb/SomeFile.json"), Preferences::class
             )
         }
 
         init_pack_btn.setOnClickListener {
-            val packFile = File(Environment.getExternalStorageDirectory(), "CompiledModPack.jar_unsigned.jar")
+            val packFile = File(Environment.getExternalStorageDirectory(), "Akrolyb/Pack.jar")
             if (packFile.exists()) {
                 try {
+                    val value = Security.certificateFromApk(this, BuildConfig.APPLICATION_ID)
                     val pack = ModPack.buildPack<AMetadata, AModPack>(
-                        this, packFile, null, APackFactory
+                        this, packFile, value, APackFactory
                     )
                     pack.showSuccessToast(this)
                 } catch (t: PackException) {

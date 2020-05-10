@@ -48,6 +48,8 @@ abstract class ModPack<T : PackMetadata>(private val metadata: T) {
                 }
             } catch (t: Throwable) {
                 Timber.e(t)
+                if (t is PackException)
+                    throw t
                 throw PackMetadataException(t)
             }
 
