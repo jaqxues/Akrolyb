@@ -18,7 +18,9 @@ import java.util.jar.JarFile
  * Date: 10.05.20 - Time 18:39.
  */
 object Security {
-    fun checkSecurity(jarFile: JarFile, certificate: X509Certificate) {
+    fun checkSecurity(jarFile: JarFile, certificate: X509Certificate) = checkSecurity(jarFile, setOf(certificate))
+
+    fun checkSecurity(jarFile: JarFile, certificates: Set<X509Certificate>) {
         val toCheck = Vector<JarEntry>()
 
         for (entry in jarFile.entries()) {
@@ -27,7 +29,9 @@ object Security {
 
             toCheck.addElement(entry)
 
-            // [JarFile.getInputStream] throws Security Exception if any of the entries are signed incorrectly
+            // [JarFile.getInputStream] throws Security Exception if any of the entries are signed incorrectly and
+            // [JarEntry.getCertificates] only returns the certificates once the InputStream has been read through until
+            // the end of the stream.
             jarFile.getInputStream(entry).use {
                 @Suppress("ControlFlowWithEmptyBody")
                 while (it.read() != -1) {
@@ -52,7 +56,7 @@ object Security {
                 var signedAsExpected = false
 
                 for (certChain in certs.getSingleChains()) {
-                    if (certChain[0] == certificate) {
+                    if (certChain[0] in certificates) {
                         // Trusted Signer has been found.
                         signedAsExpected = true
                         // Add Certification to Module Pack
@@ -64,6 +68,9 @@ object Security {
         }
     }
 
+    /**
+     * Loads in a certificate file from the AssetManager
+     */
     fun certificateFromAssets(assetManager: AssetManager, name: String): X509Certificate {
         return assetManager.open(name).use {
             return@use CertificateFactory.getInstance("X.509")
@@ -71,6 +78,9 @@ object Security {
         }
     }
 
+    /**
+     * Gets the X.509 Certificate used to sign this application.
+     */
     fun certificateFromApk(context: Context, packageName: String) =
         CertificateFactory.getInstance("X.509")
             .generateCertificate(
@@ -95,6 +105,7 @@ object Security {
  * Iterator through (possibly multiple) certificate chains in the receiver certificate array.
  * (Grouping the chain by checking the current certificate's [X509Certificate.getSubjectX500Principal] and the
  * following certificate's [X509Certificate.getIssuerX500Principal] until both differ).
+ * If only one certificate was found, return the single certificate
  */
 fun Array<Certificate>.getSingleChains() = sequence {
     val certs = this@getSingleChains
