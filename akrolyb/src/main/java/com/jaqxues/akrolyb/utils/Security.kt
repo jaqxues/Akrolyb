@@ -94,8 +94,8 @@ object Security {
                             @Suppress("DEPRECATION")
                             it.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
                                 .signatures
-                        }[0].toByteArray()
-                    }
+                        }
+                    }[0].toByteArray()
                 )
             ) as X509Certificate
 }
@@ -111,19 +111,22 @@ fun Array<Certificate>.getSingleChains() = sequence {
     val certs = this@getSingleChains
     var startIdx = 0
     while (startIdx < size) {
+
+        // Only one certificate left, cannot check for following certificate
         if (startIdx == size - 1) {
             yield(arrayOf(this@getSingleChains[startIdx]))
             startIdx += 1
-        } else {
-            var i = startIdx
-            // Loop through the chain until the next certificate is not the issuer of the current certificate.
-            while (i < size - 1) {
-                if ((certs[i + 1] as X509Certificate).subjectX500Principal != (certs[i] as X509Certificate).issuerX500Principal)
-                    break
-                i++
-            }
-            yield(sliceArray(startIdx..i))
-            startIdx += i
+            break
         }
+
+        var i = startIdx
+        // Loop through the chain until the next certificate is not the issuer of the current certificate.
+        while (i < size - 1) {
+            if ((certs[i + 1] as X509Certificate).subjectX500Principal != (certs[i] as X509Certificate).issuerX500Principal)
+                break
+            i++
+        }
+        yield(sliceArray(startIdx..i))
+        startIdx += i
     }
 }
