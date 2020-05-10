@@ -1,9 +1,8 @@
 package com.jaqxues.akrolyb.pack
 
 import android.content.Context
-import android.content.pm.ApplicationInfo
-import androidx.core.content.pm.PackageInfoCompat
 import com.jaqxues.akrolyb.genhook.FeatureManager
+import com.jaqxues.akrolyb.utils.Security
 import dalvik.system.DexClassLoader
 import timber.log.Timber
 import java.io.File
@@ -35,14 +34,14 @@ abstract class ModPack<T : PackMetadata>(private val metadata: T) {
 
             val attributes = try {
                 JarFile(packFile).use { jarFile ->
-                    val manifest = jarFile.manifest
+                    val manifest = jarFile.manifest ?: throw NullPointerException("No Manifest in specified Jar")
                     if (certificate == null) {
                         Timber.i("Skipping Security Checks on Pack. Strongly advised to provide a valid Certificate to check the Packs Signature")
                     } else {
                         try {
-                            // TODO: Add security check on Jar File
+                            Security.checkSecurity(jarFile, certificate)
                         } catch (t: Throwable) {
-                            throw PackSecurityException("TODO", t)
+                            throw PackSecurityException("Security Check and Signature Verification Failed", t)
                         }
                     }
                     manifest.mainAttributes
