@@ -2,7 +2,6 @@ package com.jaqxues.akrolyb.pack
 
 import android.content.Context
 import androidx.annotation.CallSuper
-import com.jaqxues.akrolyb.BuildConfig
 import java.io.File
 import java.util.jar.Attributes
 
@@ -11,16 +10,25 @@ import java.util.jar.Attributes
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Akrolyb.<br>
  * Date: 21.04.20 - Time 11:29.
  */
-abstract class PackFactory<T: PackMetadata> {
+abstract class PackFactory<T : PackMetadata> {
     abstract val appData: AppData
     abstract fun buildMeta(attributes: Attributes, context: Context, file: File): T
 
+    /**
+     * Overridable Method to perform checks.
+     * `@CallSuper` enforced.
+     * If you want to ignore built-in checks, the super call in a try and catch clause. Please only do this if you know
+     * what you are doing
+     */
     @CallSuper
     open fun performChecks(packMetadata: T) {
         performBasicChecks(packMetadata)
     }
 
-    open fun performBasicChecks(packMetadata: T) {
+    /**
+     * This checks various things to ensure that it is safe to load the Pack
+     */
+    private fun performBasicChecks(packMetadata: T) {
         val data = appData
         // Performing Basic Checks
         if (packMetadata.devPack && !data.debug)
