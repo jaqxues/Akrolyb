@@ -16,7 +16,7 @@ import timber.log.Timber
  */
 abstract class HookWrapper : XC_MethodHook() {
     @Throws(Throwable::class)
-    override fun beforeHookedMethod(param: MethodHookParam) {
+    final override fun beforeHookedMethod(param: MethodHookParam) {
         try {
             before(param)
         } catch (ex: Exception) {
@@ -25,13 +25,12 @@ abstract class HookWrapper : XC_MethodHook() {
     }
 
     @Throws(Throwable::class)
-    override fun afterHookedMethod(param: MethodHookParam) {
+    final override fun afterHookedMethod(param: MethodHookParam) {
         try {
             after(param)
         } catch (ex: Exception) {
             Timber.e(ex)
         }
-
     }
 
     @Throws(Throwable::class)
@@ -45,7 +44,7 @@ abstract class HookWrapper : XC_MethodHook() {
 
 abstract class ReplaceWrapper : XC_MethodReplacement() {
     @Throws(Throwable::class)
-    override fun replaceHookedMethod(param: MethodHookParam): Any? =
+    final override fun replaceHookedMethod(param: MethodHookParam): Any? =
             try {
                 replace(param)
             } catch (ex: Exception) {
