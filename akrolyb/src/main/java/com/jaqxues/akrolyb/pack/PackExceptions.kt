@@ -25,3 +25,5 @@ class PackSecurityException(message: String, cause: Throwable): PackException(me
 class PackClassLoaderException(cause: Throwable): PackException("Failed to instantiate DexClassLoader instance", cause)
 
 class PackReflectionException(message: String, cause: Throwable): PackException(message, cause)
+
+class PackEnvironmentException(message: String, cause: Throwable): PackException(message, cause)
