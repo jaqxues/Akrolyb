@@ -10,6 +10,11 @@ import kotlin.reflect.KClass
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Instaprefs.<br>
  * Date: 17.03.20 - Time 11:05.
  */
+
+/**
+ * The FeatureManager class controls the registered [Feature]s and requests them to perform actions like injecting the
+ * hooks.
+ */
 class FeatureManager(featureProvider: FeatureProvider) {
     private val forcedFeatures = featureProvider.forcedFeatures
     private val optionalFeatures = featureProvider.optionalFeatures
@@ -17,23 +22,40 @@ class FeatureManager(featureProvider: FeatureProvider) {
     private val reversedFeatureMap = featureNames.map { (k, v) -> v.java.canonicalName!! to k }.toMap()
     private val disabledFeatures = featureProvider.disabledFeatures
 
-
-    fun getActiveFeatures(): List<Feature> {
+    /**
+     * Filters the features from the [FeatureProvider] to check which optional features are enabled. In case no optional
+     * feature is active, forced features will be ignored too by default.
+     *
+     * @param alwaysReturnForced Enabling this will always return the Forced Features, even if there are no optional
+     * features currently enabled
+     * @return The features defined in the [FeatureProvider].
+     */
+    fun getActiveFeatures(alwaysReturnForced: Boolean = false): List<Feature> {
         val disabled = disabledFeatures.list
         val activeOptionals = optionalFeatures.mapNotNull { (name, clazz) ->
             if (disabled.contains(name)) null else clazz
         }
 
-        return if (activeOptionals.isEmpty())
-            emptyList()
-        else
-            (activeOptionals + forcedFeatures.values).map { it.java.newInstance() }
+        val list = if (activeOptionals.isEmpty()) {
+            if (alwaysReturnForced)
+                forcedFeatures.values
+            else emptyList()
+        } else
+            activeOptionals + forcedFeatures.values
+        return list.map { it.java.newInstance() }
     }
 
+    /**
+     * Requests that all loaded features inject their hooks
+     */
     fun loadAll(classLoader: ClassLoader, context: Context, vararg collectables: CollectableDec) {
         FeatureHelper.loadAll(classLoader, context, this, *collectables)
     }
 
+    /**
+     * Allows features an entry point that gives the target application time to initialize things like preferences or
+     * other values. Usually called from a hooked [Activity.onCreate].
+     */
     fun lateInitAll(classLoader: ClassLoader, activity: Activity) {
         FeatureHelper.lateInitAll(classLoader, activity)
     }
@@ -41,10 +63,10 @@ class FeatureManager(featureProvider: FeatureProvider) {
     fun unhookByFeature(feature: KClass<out Feature>) = FeatureHelper.unhookByFeature(feature)
 
     fun resolveName(featureName: String): KClass<out Feature> =
-            featureNames[featureName] ?: throw IllegalArgumentException("Feature $featureName not resolved")
+        featureNames[featureName] ?: throw IllegalArgumentException("Feature $featureName not resolved")
 
     fun getFeatureName(canonicalName: String) =
-            reversedFeatureMap[canonicalName] ?: throw IllegalArgumentException("Feature $canonicalName not resolved")
+        reversedFeatureMap[canonicalName] ?: throw IllegalArgumentException("Feature $canonicalName not resolved")
 
     fun isFeatureEnabled(key: String): Boolean {
         checkOptionalFeatureKey(key)

@@ -23,6 +23,11 @@ import kotlin.reflect.KClass
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Instaprefs.<br>
  * Date: 16.03.20 - Time 15:42.
  */
+
+/**
+ * Abstractions for null safety, exception handling, ... Also contains caching mechanisms to cache reflection used to
+ * find classes and hooks.
+ */
 abstract class FeatureHelper : Feature {
     protected fun callMethod(obj: Any?, method: MethodDec, vararg params: Any?): Any? {
         try {
