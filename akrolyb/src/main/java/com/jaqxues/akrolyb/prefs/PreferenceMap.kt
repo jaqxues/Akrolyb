@@ -16,9 +16,27 @@ import java.util.concurrent.ConcurrentHashMap
  */
 private val FILE_LOCK = Any()
 
-class PreferenceMap : ConcurrentHashMap<String, Any> {
+class PreferenceMap : ConcurrentHashMap<String, Any?> {
     constructor()
-    constructor(m: Map<String, Any>) : super(m)
+    constructor(m: Map<String, Any?>) : super(m)
+
+    fun put(key: String, value: Any?): Any? {
+        return super.put(key, value ?: OBJ_NULL)
+    }
+
+    override fun get(key: String): Any? {
+        val value = super.get(key)
+        if (value === OBJ_NULL)
+            return null
+        return value
+    }
+
+    override fun remove(key: String): Any? {
+        val value = super.remove(key)
+        if (value === OBJ_NULL)
+            return null
+        return value
+    }
 
     fun saveMap(prefFile: File) {
         GlobalScope.launch(Dispatchers.IO) {
@@ -37,6 +55,8 @@ class PreferenceMap : ConcurrentHashMap<String, Any> {
     }
 
     companion object {
+        val OBJ_NULL = Any()
+
         private const val serialVersionUID = 2162788535918724249L
 
         @CheckResult

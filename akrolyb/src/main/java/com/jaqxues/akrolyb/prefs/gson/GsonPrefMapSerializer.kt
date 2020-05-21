@@ -36,8 +36,9 @@ class GsonPrefMapSerializer: JsonDeserializer<PreferenceMap>, JsonSerializer<Pre
                 val prefKey = obj.get("name").asString
                 val pref = Preference.findPrefByKey<Any>(prefKey)
 
-                val value = GsonUtils.singleton.fromJson(obj.get("value"), pref.type)
-                map[prefKey] = value
+                val value = GsonUtils.singleton.fromJson(obj.get("value"), pref.type) ?: PreferenceMap.OBJ_NULL
+                @Suppress("ReplacePutWithAssignment")
+                map.put(prefKey, value)
             } catch (e: Exception) {
                 Timber.e(e, "Error de-serializing PreferenceMap ($obj)")
             }
@@ -49,7 +50,11 @@ class GsonPrefMapSerializer: JsonDeserializer<PreferenceMap>, JsonSerializer<Pre
     override fun serialize(src: PreferenceMap, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
         val array = JsonArray()
         val copy = PreferenceMap(src)
-        for ((key, value) in copy.entries) {
+        for ((key, v) in copy.entries) {
+            var value = v
+            if (value === PreferenceMap.OBJ_NULL)
+                value = null
+
             try {
                 array.add(JsonObject().apply {
                     addProperty("name", key)
