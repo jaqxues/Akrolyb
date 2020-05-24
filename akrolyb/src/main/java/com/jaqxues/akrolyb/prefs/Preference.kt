@@ -11,12 +11,12 @@ import kotlin.reflect.KClass
  * Date: 15.03.20 - Time 19:09.
  */
 
-class Preference<T : Any> private constructor(
+class Preference<T> private constructor(
         val key: String,
         val default: T,
-        val type: Types<T>
+        val type: Types
 ) {
-    constructor(name: String, default: T, type: KClass<T>) : this(name, default, Types.KClassType(type))
+    constructor(name: String, default: T, type: KClass<*>) : this(name, default, Types.KClassType(type))
     constructor(name: String, default: T, type: Type) : this(name, default, Types.ReflectType(type))
 
     companion object {
@@ -38,9 +38,9 @@ class Preference<T : Any> private constructor(
     }
 }
 
-sealed class Types<T : Any> {
-    class KClassType<T : Any>(val type: KClass<T>) : Types<T>()
-    class ReflectType<T : Any>(val type: Type) : Types<T>()
+sealed class Types {
+    class KClassType(val type: KClass<*>) : Types()
+    class ReflectType(val type: Type) : Types()
 
     companion object {
         inline fun <reified T> genericType(): Type = object : TypeToken<T>() {}.type
@@ -55,7 +55,7 @@ fun Preference<Boolean>.toggle(): Boolean {
 
 fun <T> Preference<List<T>>.add(item: T, allowDuplicate: Boolean = false) {
     val list = getPref()
-    val contains = list.contains(item)
+    val contains = item in list
     if ((contains && allowDuplicate) || !contains) {
         val newList = list.toMutableList()
         newList.add(item)
@@ -65,7 +65,7 @@ fun <T> Preference<List<T>>.add(item: T, allowDuplicate: Boolean = false) {
 
 fun <T> Preference<List<T>>.remove(item: T) {
     val list = getPref()
-    if (list.contains(item)) {
+    if (item in list) {
         val newList = list.toMutableList()
         newList.remove(item)
         putPref(newList)

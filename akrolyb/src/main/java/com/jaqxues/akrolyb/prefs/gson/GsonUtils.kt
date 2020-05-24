@@ -10,7 +10,7 @@ import com.jaqxues.akrolyb.prefs.Types
  * Date: 15.03.20 - Time 21:49.
  */
 
-fun <T: Any> Gson.fromJson(el: JsonElement, type: Types<T>): T =
+fun Gson.fromJson(el: JsonElement, type: Types) =
         when (type) {
             is Types.KClassType -> fromJson(el, type.type.java)
             is Types.ReflectType -> fromJson(el, type.type)

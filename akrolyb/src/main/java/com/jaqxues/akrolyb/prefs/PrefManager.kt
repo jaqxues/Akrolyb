@@ -55,6 +55,9 @@ object PrefManager {
         throw IllegalStateException("Preferences: Initialization Failed")
     }
 
+    @JvmStatic
+    fun isInitialized() = isInitialized.get()
+
     fun loadPrefMap() {
         synchronized(FILE_LOCK) {
             try {
@@ -72,7 +75,7 @@ object PrefManager {
  Other Helper functions for working with a Preference Object are in the Preference class.
  */
 @Suppress("UNCHECKED_CAST")
-fun <T : Any> Preference<T>.getPref() =
+fun <T> Preference<T>.getPref() =
         (synchronized(this) {
             prefMap[key]
         } ?: default) as T
@@ -81,7 +84,7 @@ fun <T : Any> Preference<T>.getPref() =
  * Returns previous value
  */
 @Suppress("UNCHECKED_CAST")
-fun <T : Any> Preference<T>.putPref(value: T): T? {
+fun <T> Preference<T>.putPref(value: T): T? {
     return synchronized(this) {
         val previous = prefMap.put(key, value) as T?
         if (previous == null || previous != value) {
@@ -96,7 +99,7 @@ fun <T : Any> Preference<T>.putPref(value: T): T? {
  * Returns previous value
  */
 @Suppress("UNCHECKED_CAST")
-fun <T: Any> Preference<T>.removePref(): T? {
+fun <T> Preference<T>.removePref(): T? {
     return synchronized(this) {
         val previous = prefMap.remove(key) as T?
         if (previous != null) {
@@ -107,13 +110,13 @@ fun <T: Any> Preference<T>.removePref(): T? {
     }
 }
 
-operator fun <T : Any> Preference<T>.invoke() {
+operator fun <T> Preference<T>.invoke() {
     getPref()
 }
 
-operator fun <T: Any> Preference<T>.invoke(value: T)  {
+operator fun <T> Preference<T>.invoke(value: T)  {
     putPref(value)
 }
-operator fun <T: Any> Preference<T>.unaryMinus() {
+operator fun <T> Preference<T>.unaryMinus() {
     removePref()
 }
