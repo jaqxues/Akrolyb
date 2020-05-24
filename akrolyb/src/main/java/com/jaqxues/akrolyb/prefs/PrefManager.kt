@@ -84,7 +84,7 @@ fun <T> Preference<T>.getPref() =
  * Returns previous value
  */
 @Suppress("UNCHECKED_CAST")
-fun <T> Preference<T>.putPref(value: T): T? {
+fun <T> Preference<out T>.putPref(value: T): T? {
     return synchronized(this) {
         val previous = prefMap.put(key, value) as T?
         if (previous == null || previous != value) {
@@ -108,15 +108,4 @@ fun <T> Preference<T>.removePref(): T? {
         }
         previous
     }
-}
-
-operator fun <T> Preference<T>.invoke() {
-    getPref()
-}
-
-operator fun <T> Preference<T>.invoke(value: T)  {
-    putPref(value)
-}
-operator fun <T> Preference<T>.unaryMinus() {
-    removePref()
 }

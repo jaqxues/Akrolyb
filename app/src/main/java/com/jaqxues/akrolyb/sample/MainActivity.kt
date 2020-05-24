@@ -18,10 +18,7 @@ import com.jaqxues.akrolyb.sample.ipack.APackFactory
 import com.jaqxues.akrolyb.sample.prefs.Preferences
 import com.jaqxues.akrolyb.utils.Security
 import kotlinx.android.synthetic.main.activity_main.*
-import java.io.ByteArrayInputStream
 import java.io.File
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
 
 private const val PERM_REQ_CODE = 0xcafe
 

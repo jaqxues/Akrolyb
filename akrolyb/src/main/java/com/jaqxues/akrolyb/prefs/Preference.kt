@@ -46,38 +46,3 @@ sealed class Types {
         inline fun <reified T> genericType(): Type = object : TypeToken<T>() {}.type
     }
 }
-
-fun Preference<Boolean>.toggle(): Boolean {
-    val newValue = !getPref()
-    putPref(newValue)
-    return newValue
-}
-
-fun <T> Preference<List<T>>.add(item: T, allowDuplicate: Boolean = false) {
-    val list = getPref()
-    val contains = item in list
-    if ((contains && allowDuplicate) || !contains) {
-        val newList = list.toMutableList()
-        newList.add(item)
-        putPref(newList)
-    }
-}
-
-fun <T> Preference<List<T>>.remove(item: T) {
-    val list = getPref()
-    if (item in list) {
-        val newList = list.toMutableList()
-        newList.remove(item)
-        putPref(newList)
-    }
-}
-
-operator fun Preference<Boolean>.not() = toggle()
-
-operator fun <T> Preference<List<T>>.plusAssign(item: T) {
-    add(item, false)
-}
-
-operator fun <T> Preference<List<T>>.minusAssign(item: T) {
-    remove(item)
-}
