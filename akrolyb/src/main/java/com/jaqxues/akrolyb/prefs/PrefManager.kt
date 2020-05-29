@@ -58,6 +58,15 @@ object PrefManager {
     @JvmStatic
     fun isInitialized() = isInitialized.get()
 
+    @JvmStatic
+    fun forceReset() {
+        synchronized(FILE_LOCK) {
+            prefMap.clear()
+            prefObserver.notifyLocalChange()
+            prefMap.saveMap(prefFile)
+        }
+    }
+
     fun loadPrefMap() {
         synchronized(FILE_LOCK) {
             try {
