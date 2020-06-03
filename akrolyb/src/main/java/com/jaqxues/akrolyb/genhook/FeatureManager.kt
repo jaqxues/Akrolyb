@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
  * The FeatureManager class controls the registered [Feature]s and requests them to perform actions like injecting the
  * hooks.
  */
-class FeatureManager(featureProvider: FeatureProvider) {
+class FeatureManager<T: Feature>(featureProvider: FeatureProvider<T>) {
     private val forcedFeatures = featureProvider.forcedFeatures
     private val optionalFeatures = featureProvider.optionalFeatures
     private val featureNames = forcedFeatures + optionalFeatures
@@ -30,7 +30,7 @@ class FeatureManager(featureProvider: FeatureProvider) {
      * features currently enabled
      * @return The features defined in the [FeatureProvider].
      */
-    fun getActiveFeatures(alwaysReturnForced: Boolean = false): List<Feature> {
+    fun getActiveFeatures(alwaysReturnForced: Boolean = false): List<T> {
         val disabled = disabledFeatures.list
         val activeOptionals = optionalFeatures.mapNotNull { (name, clazz) ->
             if (disabled.contains(name)) null else clazz
@@ -60,9 +60,9 @@ class FeatureManager(featureProvider: FeatureProvider) {
         FeatureHelper.lateInitAll(classLoader, activity)
     }
 
-    fun unhookByFeature(feature: KClass<out Feature>) = FeatureHelper.unhookByFeature(feature)
+    fun unhookByFeature(feature: KClass<out T>) = FeatureHelper.unhookByFeature(feature)
 
-    fun resolveName(featureName: String): KClass<out Feature> =
+    fun resolveName(featureName: String): KClass<out T> =
         featureNames[featureName] ?: throw IllegalArgumentException("Feature $featureName not resolved")
 
     fun getFeatureName(canonicalName: String) =
@@ -73,7 +73,7 @@ class FeatureManager(featureProvider: FeatureProvider) {
         return key !in disabledFeatures.list
     }
 
-    fun toggleFeature(featureClass: KClass<out Feature>, active: Boolean) {
+    fun toggleFeature(featureClass: KClass<out T>, active: Boolean) {
         val key = optionalFeatures.entries.find { (_, kClass) ->
             kClass == featureClass
         }?.key ?: throw IllegalStateException("Feature not registered")

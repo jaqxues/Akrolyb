@@ -209,7 +209,7 @@ abstract class FeatureHelper : Feature {
         fun loadAll(
             classLoader: ClassLoader,
             context: Context,
-            featureManager: FeatureManager,
+            featureManager: FeatureManager<out Feature>,
             vararg collectables: CollectableDec
         ) {
             check(unhookMap.isEmpty()) { "Some Features already loaded" }

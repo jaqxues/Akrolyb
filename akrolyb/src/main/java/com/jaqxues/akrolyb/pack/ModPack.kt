@@ -1,7 +1,6 @@
 package com.jaqxues.akrolyb.pack
 
 import android.content.Context
-import com.jaqxues.akrolyb.genhook.FeatureManager
 import com.jaqxues.akrolyb.utils.Security
 import dalvik.system.DexClassLoader
 import timber.log.Timber
@@ -18,8 +17,6 @@ import java.util.jar.JarFile
  */
 
 abstract class ModPack<T : IPackMetadata>(private val metadata: T) {
-    abstract fun loadFeatureManager(): FeatureManager
-
     companion object {
 
         /**

@@ -11,12 +11,12 @@ import kotlin.reflect.KClass
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Instaprefs.<br>
  * Date: 16.03.20 - Time 15:55.
  */
-interface FeatureProvider {
+interface FeatureProvider<T: Feature> {
     val disabledFeatures: DisabledFeatures
 
-    val optionalFeatures: Map<String, KClass<out Feature>>
+    val optionalFeatures: Map<String, KClass<out T>>
 
-    val forcedFeatures: Map<String, KClass<out Feature>>
+    val forcedFeatures: Map<String, KClass<out T>>
 }
 
 interface DisabledFeatures {
