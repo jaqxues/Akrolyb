@@ -7,7 +7,7 @@ import java.util.jar.Attributes
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Akrolyb.<br>
  * Date: 15.04.20 - Time 01:01.
  */
-interface PackMetadata {
+interface IPackMetadata {
     val devPack: Boolean
     val packVersion: String
     val packVersionCode: Int

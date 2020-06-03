@@ -14,16 +14,16 @@ import java.util.jar.Attributes
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Akrolyb.<br>
  * Date: 20.04.20 - Time 12:25.
  */
-abstract class AModPack(metadata: AMetadata) : ModPack<AMetadata>(metadata) {
+abstract class AModPack(metadata: PackMetadata) : ModPack<PackMetadata>(metadata) {
     abstract fun <T> customMethods(): T
     abstract fun getFragments(): Array<Fragment>
     abstract fun showSuccessToast(context: Context)
 }
 
-object APackFactory: PackFactory<AMetadata>() {
+object APackFactory: PackFactory<PackMetadata>() {
     override val appData: AppData
         get() = AppData(BuildConfig.VERSION_CODE, BuildConfig.DEBUG, BuildConfig.APPLICATION_ID, BuildConfig.FLAVOR)
 
     override fun buildMeta(attributes: Attributes, context: Context, file: File) =
-        AMetadata.toPackMetadata(attributes, context, file)
+        PackMetadata.toPackMetadata(attributes, context, file)
 }

@@ -12,7 +12,7 @@ import androidx.core.content.ContextCompat
 import com.jaqxues.akrolyb.pack.ModPack
 import com.jaqxues.akrolyb.pack.PackException
 import com.jaqxues.akrolyb.prefs.PrefManager
-import com.jaqxues.akrolyb.sample.ipack.AMetadata
+import com.jaqxues.akrolyb.sample.ipack.PackMetadata
 import com.jaqxues.akrolyb.sample.ipack.AModPack
 import com.jaqxues.akrolyb.sample.ipack.APackFactory
 import com.jaqxues.akrolyb.sample.prefs.Preferences
@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
             if (packFile.exists()) {
                 try {
                     val value = Security.certificateFromApk(this, BuildConfig.APPLICATION_ID)
-                    val pack = ModPack.buildPack<AMetadata, AModPack>(
+                    val pack = ModPack.buildPack<PackMetadata, AModPack>(
                         this, packFile, value, APackFactory
                     )
                     pack.showSuccessToast(this)

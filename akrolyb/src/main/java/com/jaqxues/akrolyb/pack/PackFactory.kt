@@ -16,7 +16,7 @@ import java.util.jar.Attributes
  * safe to load a pack in the current environment. If this is not wanted, override [performChecks] and follow the
  * instructions in the documentation of this method.
  */
-abstract class PackFactory<T : PackMetadata> {
+abstract class PackFactory<T : IPackMetadata> {
     abstract val appData: AppData
     abstract fun buildMeta(attributes: Attributes, context: Context, file: File): T
 

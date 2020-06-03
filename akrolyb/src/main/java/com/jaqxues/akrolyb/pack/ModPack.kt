@@ -17,7 +17,7 @@ import java.util.jar.JarFile
  * Date: 14.04.20 - Time 21:53.
  */
 
-abstract class ModPack<T : PackMetadata>(private val metadata: T) {
+abstract class ModPack<T : IPackMetadata>(private val metadata: T) {
     abstract fun loadFeatureManager(): FeatureManager
 
     companion object {
@@ -25,7 +25,7 @@ abstract class ModPack<T : PackMetadata>(private val metadata: T) {
         /**
          * Function to instantiate a Pack with all the given information. Performs basic checks with the given
          * PackFactory object, checks security aspects if a certificate is given. It instantiates the actual object by
-         * creating a DexClassLoader on the given jar file and tries to load the [PackMetadata.packImplClass] and invoke
+         * creating a DexClassLoader on the given jar file and tries to load the [IPackMetadata.packImplClass] and invoke
          * its constructor by using reflection.
          *
          * @param context Context that is used to create the classLoader's cache
@@ -43,7 +43,7 @@ abstract class ModPack<T : PackMetadata>(private val metadata: T) {
          * @see [PackFactory]
          */
         @Throws(PackException::class)
-        fun <T : PackMetadata, M : ModPack<T>> buildPack(
+        fun <T : IPackMetadata, M : ModPack<T>> buildPack(
             context: Context,
             packFile: File,
             certificate: X509Certificate? = null,
