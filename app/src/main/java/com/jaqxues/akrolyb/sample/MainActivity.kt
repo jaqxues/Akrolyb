@@ -9,12 +9,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.jaqxues.akrolyb.pack.ModPack
+import com.jaqxues.akrolyb.pack.ModPackBase
 import com.jaqxues.akrolyb.pack.PackException
 import com.jaqxues.akrolyb.prefs.PrefManager
 import com.jaqxues.akrolyb.sample.ipack.PackMetadata
-import com.jaqxues.akrolyb.sample.ipack.AModPack
-import com.jaqxues.akrolyb.sample.ipack.APackFactory
+import com.jaqxues.akrolyb.sample.ipack.ModPack
+import com.jaqxues.akrolyb.sample.ipack.PackFactory
 import com.jaqxues.akrolyb.sample.prefs.Preferences
 import com.jaqxues.akrolyb.utils.Security
 import kotlinx.android.synthetic.main.activity_main.*
@@ -58,8 +58,8 @@ class MainActivity : AppCompatActivity() {
             if (packFile.exists()) {
                 try {
                     val value = Security.certificateFromApk(this, BuildConfig.APPLICATION_ID)
-                    val pack = ModPack.buildPack<PackMetadata, AModPack>(
-                        this, packFile, value, APackFactory
+                    val pack = ModPackBase.buildPack<PackMetadata, ModPack>(
+                        this, packFile, value, PackFactory
                     )
                     pack.showSuccessToast(this)
                 } catch (t: PackException) {

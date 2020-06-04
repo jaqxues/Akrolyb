@@ -16,7 +16,7 @@ import java.util.jar.JarFile
  * Date: 14.04.20 - Time 21:53.
  */
 
-abstract class ModPack<T : IPackMetadata>(private val metadata: T) {
+abstract class ModPackBase<T : IPackMetadata>(private val metadata: T) {
     companion object {
 
         /**
@@ -34,17 +34,17 @@ abstract class ModPack<T : IPackMetadata>(private val metadata: T) {
          * @param packBuilder A PackFactory used to instantiate the Metadata associated to the Pack and retrieve
          * information needed to build the Pack.
          *
-         * @return The [ModPack] object with the implementation provided by the Pack. Allows communication with the Pack
+         * @return The [ModPackBase] object with the implementation provided by the Pack. Allows communication with the Pack
          * with an abstract class that the pack implementation extends.
          *
-         * @see [PackFactory]
+         * @see [PackFactoryBase]
          */
         @Throws(PackException::class)
-        fun <T : IPackMetadata, M : ModPack<T>> buildPack(
+        fun <T : IPackMetadata, M : ModPackBase<T>> buildPack(
             context: Context,
             packFile: File,
             certificate: X509Certificate? = null,
-            packBuilder: PackFactory<T>
+            packBuilder: PackFactoryBase<T>
         ): M {
             if (!packFile.exists()) throw PackNotFoundException(packFile)
 
@@ -85,7 +85,7 @@ abstract class ModPack<T : IPackMetadata>(private val metadata: T) {
 
             try {
                 // Performing Checks if it safe to load the Pack in the current environment
-                packBuilder.performChecks(metadata)
+                packBuilder.performChecks(metadata, context, packFile)
             } catch (t: Throwable) {
                 throw PackEnvironmentException("Checks to ensure a safe environment have failed", t)
             }
@@ -97,7 +97,7 @@ abstract class ModPack<T : IPackMetadata>(private val metadata: T) {
                         throw FileNotFoundException("Optimised CodeCache dir not found and could not be created")
                     DexClassLoader(
                         packFile.absolutePath, absolutePath,
-                        null, ModPack::class.java.classLoader
+                        null, ModPackBase::class.java.classLoader
                     )
                 }
             } catch (t: Throwable) {

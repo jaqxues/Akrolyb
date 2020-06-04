@@ -16,7 +16,7 @@ import java.util.jar.Attributes
  * safe to load a pack in the current environment. If this is not wanted, override [performChecks] and follow the
  * instructions in the documentation of this method.
  */
-abstract class PackFactory<T : IPackMetadata> {
+abstract class PackFactoryBase<T : IPackMetadata> {
     abstract val appData: AppData
     abstract fun buildMeta(attributes: Attributes, context: Context, file: File): T
 
@@ -30,7 +30,7 @@ abstract class PackFactory<T : IPackMetadata> {
      * @param packMetadata The given metadata to perform checks on.
      */
     @CallSuper
-    open fun performChecks(packMetadata: T) {
+    open fun performChecks(packMetadata: T, context: Context, file: File) {
         performBasicChecks(packMetadata)
     }
 
@@ -47,7 +47,7 @@ abstract class PackFactory<T : IPackMetadata> {
         if (data.appId.endsWith(".pack") || data.flavor == "pack")
             throw IllegalStateException("Detected Pack Flavor as current APK Build")
         try {
-            ModPack::class.java.classLoader!!.loadClass(packMetadata.packImplClass)
+            ModPackBase::class.java.classLoader!!.loadClass(packMetadata.packImplClass)
             throw IllegalStateException("Detected Pack in Classloader")
         } catch (ignored: ClassNotFoundException) {}
     }
