@@ -13,5 +13,5 @@ object Preferences {
     // genericType allows us to use Preference<List<String>> and not Preference<List<*>> (Subtype of List required for Serialization)
     val DISABLED_FEATURES = Preference<List<String>>("disabled_features", emptyList(), genericType<List<String>>())
 
-    val SHOULD_SAVE = Preference("should_save", false, Boolean::class.java)
+    val SHOULD_SAVE = Preference("should_save", false, Boolean::class)
 }
