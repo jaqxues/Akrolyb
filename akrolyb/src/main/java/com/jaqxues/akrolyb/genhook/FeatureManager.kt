@@ -2,6 +2,7 @@ package com.jaqxues.akrolyb.genhook
 
 import android.app.Activity
 import android.content.Context
+import com.jaqxues.akrolyb.genhook.states.StateManager
 import com.jaqxues.akrolyb.utils.CollectableDec
 import kotlin.reflect.KClass
 
@@ -15,12 +16,14 @@ import kotlin.reflect.KClass
  * The FeatureManager class controls the registered [Feature]s and requests them to perform actions like injecting the
  * hooks.
  */
-class FeatureManager<T: Feature>(featureProvider: FeatureProvider<T>) {
+class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
     private val forcedFeatures = featureProvider.forcedFeatures
     private val optionalFeatures = featureProvider.optionalFeatures
     private val featureNames = forcedFeatures + optionalFeatures
     private val reversedFeatureMap = featureNames.map { (k, v) -> v.java.canonicalName!! to k }.toMap()
     private val disabledFeatures = featureProvider.disabledFeatures
+
+    val stateManager = StateManager()
 
     /**
      * Filters the features from the [FeatureProvider] to check which optional features are enabled. In case no optional
@@ -49,7 +52,7 @@ class FeatureManager<T: Feature>(featureProvider: FeatureProvider<T>) {
      * Requests that all loaded features inject their hooks
      */
     fun loadAll(classLoader: ClassLoader, context: Context, vararg collectables: CollectableDec) {
-        FeatureHelper.loadAll(classLoader, context, this, *collectables)
+        FeatureHelper.loadAll(classLoader, context, this, stateManager, *collectables)
     }
 
     /**
@@ -57,7 +60,7 @@ class FeatureManager<T: Feature>(featureProvider: FeatureProvider<T>) {
      * other values. Usually called from a hooked [Activity.onCreate].
      */
     fun lateInitAll(classLoader: ClassLoader, activity: Activity) {
-        FeatureHelper.lateInitAll(classLoader, activity)
+        FeatureHelper.lateInitAll(classLoader, activity, stateManager)
     }
 
     fun unhookByFeature(feature: KClass<out T>) = FeatureHelper.unhookByFeature(feature)

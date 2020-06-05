@@ -29,6 +29,7 @@ import kotlin.reflect.KClass
  * find classes and hooks.
  */
 abstract class FeatureHelper : Feature {
+    private lateinit var stateManager: StateManager
     protected fun callMethod(obj: Any?, method: MethodDec, vararg params: Any?): Any? {
         try {
             // obj == null -> invoke Static Method, must be resolved
@@ -202,14 +203,14 @@ abstract class FeatureHelper : Feature {
 
     internal companion object {
         private lateinit var resolvedMembers: Map<MemberDec, Member>
-        private var unhookMap = mutableMapOf<KClass<out Feature>, MutableList<XC_MethodHook.Unhook>>()
-        private lateinit var activeFeatures: List<Feature>
-        private lateinit var stateManager: StateManager
+        private var unhookMap = mutableMapOf<KClass<out FeatureHelper>, MutableList<XC_MethodHook.Unhook>>()
+        private lateinit var activeFeatures: List<FeatureHelper>
 
         fun loadAll(
             classLoader: ClassLoader,
             context: Context,
-            featureManager: FeatureManager<out Feature>,
+            featureManager: FeatureManager<out FeatureHelper>,
+            stateManager: StateManager,
             vararg collectables: CollectableDec
         ) {
             check(unhookMap.isEmpty()) { "Some Features already loaded" }
@@ -218,10 +219,10 @@ abstract class FeatureHelper : Feature {
             if (activeFeatures.isEmpty())
                 return
 
-            stateManager = StateManager()
-            resolveMembers(classLoader, activeFeatures.map { it::class.java }, *collectables)
+            resolveMembers(classLoader, activeFeatures.map { it::class.java }, stateManager, *collectables)
 
             for (feature in activeFeatures) {
+                feature.stateManager = stateManager
                 try {
                     feature.loadFeature(classLoader, context)
                 } catch (ex: Exception) {
@@ -230,7 +231,7 @@ abstract class FeatureHelper : Feature {
             }
         }
 
-        fun lateInitAll(classLoader: ClassLoader, activity: Activity) {
+        fun lateInitAll(classLoader: ClassLoader, activity: Activity, stateManager: StateManager) {
             for (feature in activeFeatures) {
                 try {
                     feature.lateInit(classLoader, activity)
@@ -241,7 +242,7 @@ abstract class FeatureHelper : Feature {
         }
 
         /** @return true if unhooks have been performed */
-        fun unhookByFeature(feature: KClass<out Feature>): Boolean {
+        fun unhookByFeature(feature: KClass<out FeatureHelper>): Boolean {
             return unhookMap[feature]?.let { list ->
                 if (unhookMap.isEmpty())
                     return@let false
@@ -263,7 +264,8 @@ abstract class FeatureHelper : Feature {
          */
         private fun resolveMembers(
             classLoader: ClassLoader,
-            features: List<Class<out Feature>>,
+            features: List<Class<out FeatureHelper>>,
+            stateManager: StateManager,
             vararg collectables: CollectableDec
         ) {
             // Nullable Class means unresolved class, should be skipped for other members of class

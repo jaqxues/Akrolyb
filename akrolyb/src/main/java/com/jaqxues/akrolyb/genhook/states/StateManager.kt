@@ -6,6 +6,7 @@ import com.jaqxues.akrolyb.genhook.decs.ClassDec
 import com.jaqxues.akrolyb.genhook.decs.MemberDec
 import com.jaqxues.akrolyb.genhook.decs.VariableDec
 import com.jaqxues.akrolyb.utils.associateNotNull
+import kotlin.reflect.KClass
 
 
 /**
@@ -14,7 +15,7 @@ import com.jaqxues.akrolyb.utils.associateNotNull
  */
 class StateManager {
     private val unresolved = mutableListOf<WarnSignal>()
-    private val warnings = mutableMapOf<Class<out Feature>, WarnSignal>()
+    private val warnings = mutableMapOf<Class<out Feature>, MutableList<WarnSignal>>()
     private val aborts = mutableMapOf<Class<out Feature>, AbortSignal>()
 
     internal fun addUnresolvedClass(dec: ClassDec, ex: ClassNotFoundException) {
@@ -29,12 +30,29 @@ class StateManager {
         }
     }
 
+    private inline fun safeAddWarn(feature: KClass<out Feature>, signal: () -> WarnSignal) {
+        var list = warnings[feature.java]
+        if (list == null) {
+            list = mutableListOf()
+            warnings[feature.java] = list
+        }
+        list.add(signal())
+    }
+
     internal fun addCallError(feature: Feature, dec: MemberDec, ex: Exception) {
-        warnings[feature::class.java] = WarnSignal.MethodCallError(dec, ex)
+        safeAddWarn(feature::class) { WarnSignal.MethodCallError(dec, ex) }
     }
 
     internal fun addHookError(dec: MemberDec, feature: Feature, ex: Exception) {
-        warnings[feature::class.java] = WarnSignal.MethodHookError(dec, ex)
+        safeAddWarn(feature::class) { WarnSignal.MethodHookError(dec, ex) }
+    }
+
+    internal fun addVarError(feature: Feature, dec: VariableDec<*>, ex: Exception) {
+        safeAddWarn(feature::class) { WarnSignal.UnresolvedVar(dec, ex) }
+    }
+
+    internal fun addAddInsFieldError(feature: Feature, dec: AddInsField<*>, ex: Exception) {
+        safeAddWarn(feature::class) { WarnSignal.AddInsFieldError(dec, ex) }
     }
 
     internal fun addLateInitAbort(feature: Feature, ex: Exception) {
@@ -45,21 +63,15 @@ class StateManager {
         aborts[feature::class.java] = AbortSignal.Hooks(ex)
     }
 
-    internal fun addVarError(feature: Feature, dec: VariableDec<*>, ex: Exception) {
-        warnings[feature::class.java] = WarnSignal.UnresolvedVar(dec, ex)
-    }
-
-    internal fun addAddInsFieldError(feature: Feature, dec: AddInsField<*>, ex: Exception) {
-        warnings[feature::class.java] = WarnSignal.AddInsFieldError(dec, ex)
-    }
-
     fun getGlobalState(): State {
         if (aborts.isNotEmpty())
-            return State.Aborted(aborts.values + warnings.values + unresolved)
-        if (warnings.isNotEmpty() && unresolved.isNotEmpty())
-            return State.Warning(warnings.values + unresolved)
+            return State.Aborted(aborts.values + warnings.values.flatten() + unresolved)
+        if (warnings.isNotEmpty() || unresolved.isNotEmpty())
+            return State.Warning(warnings.values.flatten() + unresolved)
         return State.Success
     }
+
+    fun byFeature(vararg features: Class<out Feature>) = byFeature(features.toList())
 
     fun byFeature(features: List<Class<out Feature>>): Map<Class<out Feature>, State> {
         val reasonMap = features.associateWith { mutableListOf<StateReason>() }
@@ -67,7 +79,7 @@ class StateManager {
             return features.associateWith { State.Success }
 
         for ((k, v) in warnings) {
-            (reasonMap[k] ?: error("Unknown Feature in Warn Signals")).add(v)
+            (reasonMap[k] ?: error("Unknown Feature in Warn Signals")).addAll(v)
         }
 
         if (unresolved.isNotEmpty()) {
