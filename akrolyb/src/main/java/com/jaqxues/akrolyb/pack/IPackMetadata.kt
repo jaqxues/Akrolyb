@@ -1,7 +1,5 @@
 package com.jaqxues.akrolyb.pack
 
-import java.util.jar.Attributes
-
 
 /**
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Akrolyb.<br>

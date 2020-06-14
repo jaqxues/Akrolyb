@@ -12,10 +12,18 @@ import kotlin.reflect.KClass
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Instaprefs.<br>
  * Date: 15.03.20 - Time 21:38.
  */
+
 private val FILE_LOCK = Any()
+
+/**
+ * StrictMode: If enabled, it ignores Preferences that are not loaded
+ * Dangerous: Risk of deleting used Preferences by overwriting the file and ignoring unloaded Preferences
+ */
+internal var strictMode: Boolean = false
 private lateinit var prefMap: PreferenceMap
 private lateinit var prefObserver: PrefObserver
 private lateinit var prefFile: File
+private lateinit var prefClasses: Array<out KClass<*>>
 
 object PrefManager {
     private val isInitialized = AtomicBoolean()
@@ -34,6 +42,8 @@ object PrefManager {
             return false
         }
 
+        prefClasses = preferences
+
         this.serializer = serializer
         synchronized(FILE_LOCK) {
             file.createFile()?.let {
@@ -41,11 +51,10 @@ object PrefManager {
 
                 Timber.d("Preferences File Path: ${it.absolutePath}")
 
-                Preference.collectPreferences(*preferences)
                 prefObserver = PrefObserver(prefFile)
                 prefObserver.startWatching()
 
-                loadPrefMap()
+                triggerReload()
 
                 return true
             }
@@ -53,6 +62,19 @@ object PrefManager {
 
         isInitialized.set(false)
         throw IllegalStateException("Preferences: Initialization Failed")
+    }
+
+    fun addPreferences(vararg preferences: KClass<*>, _strictMode: Boolean = true) {
+        strictMode = _strictMode
+        triggerReload(*preferences)
+    }
+
+    /**
+     * @param preferences Allow loading only new preferences, defaults to all classes ([prefClasses])
+     */
+    private fun triggerReload(vararg preferences: KClass<*> = prefClasses) {
+        Preference.collectPreferences(*preferences)
+        loadPrefMap()
     }
 
     @JvmStatic

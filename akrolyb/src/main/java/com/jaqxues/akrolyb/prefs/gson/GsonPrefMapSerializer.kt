@@ -4,6 +4,7 @@ import com.google.gson.*
 import com.jaqxues.akrolyb.prefs.Preference
 import com.jaqxues.akrolyb.prefs.PreferenceMap
 import com.jaqxues.akrolyb.prefs.PreferenceMapSerializer
+import com.jaqxues.akrolyb.prefs.strictMode
 import timber.log.Timber
 import java.io.Reader
 import java.io.Writer
@@ -34,11 +35,19 @@ class GsonPrefMapSerializer: JsonDeserializer<PreferenceMap>, JsonSerializer<Pre
             try {
                 obj as JsonObject
                 val prefKey = obj.get("name").asString
-                val pref = Preference.findPrefByKey<Any>(prefKey)
+                val value = obj.get("value")
+                    ?: throw IllegalStateException("Preference JsonObject does not contain a \"value\" member.")
+                val serialized = try {
+                    val pref = Preference.findPrefByKey<Any>(prefKey)
+                    GsonUtils.singleton.fromJson(value, pref.type) ?: PreferenceMap.OBJ_NULL
+                } catch (ex: Exception) {
+                    Timber.w(ex)
+                    if (strictMode) continue
 
-                val value = GsonUtils.singleton.fromJson(obj.get("value"), pref.type) ?: PreferenceMap.OBJ_NULL
-                @Suppress("ReplacePutWithAssignment")
-                map.put(prefKey, value)
+                    value
+                }
+
+                map[prefKey] = serialized
             } catch (e: Exception) {
                 Timber.e(e, "Error de-serializing PreferenceMap ($obj)")
             }
@@ -54,11 +63,13 @@ class GsonPrefMapSerializer: JsonDeserializer<PreferenceMap>, JsonSerializer<Pre
             var value = v
             if (value === PreferenceMap.OBJ_NULL)
                 value = null
+            // Ignore unloaded values if in strict mode (might delete used preferences)
+            if (value is JsonElement && strictMode) continue
 
             try {
                 array.add(JsonObject().apply {
                     addProperty("name", key)
-                    add("value", GsonUtils.singleton.toJsonTree(value))
+                    add("value", if (value is JsonElement) value else GsonUtils.singleton.toJsonTree(value))
                 })
             } catch (e: Exception) {
                 Timber.e(e, "Error serializing PreferenceMap ($key - $value")

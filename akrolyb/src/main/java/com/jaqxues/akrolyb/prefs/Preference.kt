@@ -20,14 +20,14 @@ class Preference<T> private constructor(
     constructor(name: String, default: T, type: Type) : this(name, default, Types.ReflectType(type))
 
     companion object {
-        private lateinit var prefList: Map<String, Preference<*>>
+        private lateinit var prefList: MutableMap<String, Preference<*>>
 
         internal fun collectPreferences(vararg prefClasses: KClass<*>) {
-            var map = mapOf<String, Preference<*>>()
+            val map = if (::prefList.isInitialized) prefList else mutableMapOf()
             for (prefClass in prefClasses) {
-                map = map + prefClass.collectAll<Preference<*>>().associateBy { it.key }
+                map += prefClass.collectAll<Preference<*>>().associateBy { it.key }
             }
-            prefList = map.toMap()
+            prefList = map
         }
 
         @Suppress("UNCHECKED_CAST")
