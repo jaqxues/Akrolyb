@@ -65,6 +65,7 @@ object PrefManager {
     }
 
     fun addPreferences(vararg preferences: KClass<*>, _strictMode: Boolean = true) {
+        prefClasses = arrayOf(*prefClasses, *preferences)
         strictMode = _strictMode
         triggerReload(*preferences)
     }
