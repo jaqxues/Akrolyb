@@ -1,9 +1,6 @@
 package com.jaqxues.akrolyb.sample.hooks
 
-import com.jaqxues.akrolyb.genhook.DisabledFeatures
-import com.jaqxues.akrolyb.genhook.Feature
-import com.jaqxues.akrolyb.genhook.FeatureManager
-import com.jaqxues.akrolyb.genhook.FeatureProvider
+import com.jaqxues.akrolyb.genhook.*
 import com.jaqxues.akrolyb.sample.hooks.features.Forced
 import com.jaqxues.akrolyb.sample.hooks.features.SavingFeature
 import com.jaqxues.akrolyb.sample.prefs.Preferences
@@ -14,7 +11,7 @@ import com.jaqxues.akrolyb.sample.prefs.Preferences
  * Date: 27.03.20 - Time 20:34.
  */
 object Provider {
-    val features = FeatureManager(object : FeatureProvider<Feature> {
+    val features = FeatureManager(object : FeatureProvider<FeatureHelper> {
 
         override val disabledFeatures = DisabledFeatures.fromPref(Preferences.DISABLED_FEATURES)
 
