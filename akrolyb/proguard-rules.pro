@@ -19,3 +19,8 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+
+# Save Mappings to specified path and reuse mapping so APK - Pack Compatibility won't break
+-printmapping build/pack_compiler/proguard_mappings/current.txt
+-applymapping build/pack_compiler/proguard_mappings/current.txt

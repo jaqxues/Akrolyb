@@ -1,2 +1,4 @@
-include ':app', ':akrolyb'
+include ':app'
+include ':akrolyb'
+include ':packimpl'
 rootProject.name='Akrolyb'

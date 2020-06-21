@@ -1,0 +1,42 @@
+apply plugin: 'com.android.dynamic-feature'
+apply plugin: 'kotlin-android'
+apply plugin: "com.jaqxues.pack-compiler"
+
+android {
+    compileSdkVersion 29
+    
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation project(':app')
+}
+
+packCompiler {
+    attributes = [
+            Development    : true,
+            PackVersion    : "1.0.0",
+            PackVersionCode: 1,
+            MinApkVersion  : 1,
+            PackImplClass  : "com.jaqxues.akrolyb.sample.pack.PackImpl",
+    ]
+    getJarName = { attributes ->
+        return new StringBuilder("Pack_v")
+                .append(attributes["PackVersion"])
+                .toString()
+    }
+    adbPush = {
+        defaultPath = "/storage/emulated/0/"
+        directory = "Akrolyb/Packs"
+        deviceConfigFile = file("../Secrets/AdbPushConfig.json")
+    }
+}

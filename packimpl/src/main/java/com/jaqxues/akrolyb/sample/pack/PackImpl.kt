@@ -3,8 +3,6 @@ package com.jaqxues.akrolyb.sample.pack
 import android.content.Context
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.jaqxues.akrolyb.genhook.FeatureHelper
-import com.jaqxues.akrolyb.genhook.FeatureManager
 import com.jaqxues.akrolyb.sample.ipack.ModPack
 import com.jaqxues.akrolyb.sample.ipack.PackMetadata
 
