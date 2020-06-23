@@ -1,4 +1,8 @@
-include ':app'
 include ':akrolyb'
-include ':packimpl'
+
+if (!System.env.JITPACK) {
+    include ':app'
+    include ':packimpl'
+}
+
 rootProject.name='Akrolyb'
