@@ -6,7 +6,6 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Environment
 import com.jaqxues.akrolyb.prefs.PrefManager
-import com.jaqxues.akrolyb.sample.hooks.Declarations
 import com.jaqxues.akrolyb.sample.hooks.Provider
 import com.jaqxues.akrolyb.sample.prefs.Preferences
 import de.robv.android.xposed.IXposedHookLoadPackage
@@ -40,8 +39,7 @@ class HookManager : IXposedHookLoadPackage {
                 try {
                     Provider.features.loadAll(
                         lpparam.classLoader,
-                        param.args[0] as Context,
-                        Declarations::class
+                        param.args[0] as Context
                     )
 
                     findAndHookMethod("com.some.example.app.SomeActivity", lpparam.classLoader,

@@ -20,6 +20,7 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
     private val optionalFeatures = featureProvider.optionalFeatures
     private val featureNames = forcedFeatures + optionalFeatures
     private val disabledFeatures = featureProvider.disabledFeatures
+    private val hookDefs = featureProvider.hookDefs
 
     val stateManager = StateManager()
 
@@ -49,8 +50,8 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
     /**
      * Requests that all loaded features inject their hooks
      */
-    fun loadAll(classLoader: ClassLoader, context: Context, vararg collectables: Any) {
-        FeatureHelper.loadAll(classLoader, context, this, stateManager, *collectables)
+    fun loadAll(classLoader: ClassLoader, context: Context) {
+        FeatureHelper.loadAll(classLoader, context, this, stateManager, *hookDefs)
     }
 
     /**

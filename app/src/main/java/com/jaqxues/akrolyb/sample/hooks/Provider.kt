@@ -23,5 +23,6 @@ object Provider {
         override val forcedFeatures = mapOf(
             "forced" to Forced::class
         )
+        override val hookDefs = arrayOf(Declarations::class)
     })
 }

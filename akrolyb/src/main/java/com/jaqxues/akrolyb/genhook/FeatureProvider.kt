@@ -13,4 +13,6 @@ interface FeatureProvider<T: Feature> {
     val optionalFeatures: Map<String, KClass<out T>>
 
     val forcedFeatures: Map<String, KClass<out T>>
+
+    val hookDefs: Array<out Any>
 }
