@@ -19,7 +19,6 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
     private val forcedFeatures = featureProvider.forcedFeatures
     private val optionalFeatures = featureProvider.optionalFeatures
     private val featureNames = forcedFeatures + optionalFeatures
-    private val reversedFeatureMap = featureNames.map { (k, v) -> v.java.canonicalName!! to k }.toMap()
     private val disabledFeatures = featureProvider.disabledFeatures
 
     val stateManager = StateManager()
@@ -33,7 +32,7 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
      * @return The features defined in the [FeatureProvider].
      */
     fun getActiveFeatures(alwaysReturnForced: Boolean = false): List<T> {
-        val disabled = disabledFeatures.list
+        val disabled = disabledFeatures
         val activeOptionals = optionalFeatures.mapNotNull { (name, clazz) ->
             if (disabled.contains(name)) null else clazz
         }
@@ -62,38 +61,17 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
         FeatureHelper.lateInitAll(classLoader, activity, stateManager)
     }
 
-    fun unhookByFeature(feature: KClass<out T>) = FeatureHelper.unhookByFeature(feature)
+    fun unhookFeatureByClass(feature: KClass<out T>) = FeatureHelper.unhookByFeature(feature)
+    fun unhookFeatureByName(feature: String) = FeatureHelper.unhookByFeature(getFeatureNameByClass(feature))
 
-    fun resolveName(featureName: String): KClass<out T> =
+    fun getFeatureNameByClass(featureName: String): KClass<out T> =
         featureNames[featureName] ?: throw IllegalArgumentException("Feature $featureName not resolved")
-
-    fun getFeatureName(canonicalName: String) =
-        reversedFeatureMap[canonicalName] ?: throw IllegalArgumentException("Feature $canonicalName not resolved")
+    fun getFeatureClassByName(canonicalName: String) =
+        featureNames.entries.find { (k, _) -> k == canonicalName }?.value ?: throw IllegalArgumentException("Feature $canonicalName not resolved")
 
     fun isFeatureEnabled(key: String): Boolean {
         checkOptionalFeatureKey(key)
-        return key !in disabledFeatures.list
-    }
-
-    fun toggleFeature(featureClass: KClass<out T>, active: Boolean) {
-        val key = optionalFeatures.entries.find { (_, kClass) ->
-            kClass == featureClass
-        }?.key ?: throw IllegalStateException("Feature not registered")
-
-        togglePref(key, active)
-    }
-
-    fun toggleFeature(key: String, active: Boolean) {
-        checkOptionalFeatureKey(key)
-        togglePref(key, active)
-    }
-
-    private fun togglePref(key: String, active: Boolean) {
-        if (active)
-            disabledFeatures.enable(key)
-        else {
-            disabledFeatures.disable(key)
-        }
+        return key !in disabledFeatures
     }
 
     private fun checkOptionalFeatureKey(key: String) {
