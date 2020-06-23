@@ -7,7 +7,6 @@ import com.jaqxues.akrolyb.genhook.decs.MemberDec.ConstructorDec
 import com.jaqxues.akrolyb.genhook.decs.MemberDec.MethodDec
 import com.jaqxues.akrolyb.genhook.states.ClassNotFoundException
 import com.jaqxues.akrolyb.genhook.states.StateManager
-import com.jaqxues.akrolyb.utils.CollectableDec
 import com.jaqxues.akrolyb.utils.Predicate
 import com.jaqxues.akrolyb.utils.collectAll
 import de.robv.android.xposed.XC_MethodHook
@@ -211,7 +210,7 @@ abstract class FeatureHelper : Feature {
             context: Context,
             featureManager: FeatureManager<out FeatureHelper>,
             stateManager: StateManager,
-            vararg collectables: CollectableDec
+            vararg hookDefs: Any
         ) {
             check(unhookMap.isEmpty()) { "Some Features already loaded" }
 
@@ -219,7 +218,7 @@ abstract class FeatureHelper : Feature {
             if (activeFeatures.isEmpty())
                 return
 
-            resolveMembers(classLoader, activeFeatures.map { it::class.java }, stateManager, *collectables)
+            resolveMembers(classLoader, activeFeatures.map { it::class.java }, stateManager, *hookDefs)
 
             for (feature in activeFeatures) {
                 feature.stateManager = stateManager
@@ -266,7 +265,7 @@ abstract class FeatureHelper : Feature {
             classLoader: ClassLoader,
             features: List<Class<out FeatureHelper>>,
             stateManager: StateManager,
-            vararg collectables: CollectableDec
+            vararg hookDefs: Any
         ) {
             // Nullable Class means unresolved class, should be skipped for other members of class
             val cache = HashMap<String, Class<*>?>()
@@ -274,11 +273,11 @@ abstract class FeatureHelper : Feature {
                 memberDec.usedInFeature.any { it in features }
             }
 
-            val members: List<MemberDec> = collectables.flatMap { collectable ->
-                when (collectable) {
-                    is CollectableDec.Class -> collectable.value.collectAll(test = test)
-                    is CollectableDec.Object -> collectable.value::class.collectAll(
-                        obj = collectable.value,
+            val members: List<MemberDec> = hookDefs.flatMap { c ->
+                when (c) {
+                    is KClass<*> -> c.collectAll(test = test)
+                    else -> c::class.collectAll(
+                        obj = c,
                         test = test
                     )
                 }

@@ -3,7 +3,6 @@ package com.jaqxues.akrolyb.genhook
 import android.app.Activity
 import android.content.Context
 import com.jaqxues.akrolyb.genhook.states.StateManager
-import com.jaqxues.akrolyb.utils.CollectableDec
 import kotlin.reflect.KClass
 
 
@@ -51,7 +50,7 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
     /**
      * Requests that all loaded features inject their hooks
      */
-    fun loadAll(classLoader: ClassLoader, context: Context, vararg collectables: CollectableDec) {
+    fun loadAll(classLoader: ClassLoader, context: Context, vararg collectables: Any) {
         FeatureHelper.loadAll(classLoader, context, this, stateManager, *collectables)
     }
 

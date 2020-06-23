@@ -9,7 +9,6 @@ import com.jaqxues.akrolyb.prefs.PrefManager
 import com.jaqxues.akrolyb.sample.hooks.Declarations
 import com.jaqxues.akrolyb.sample.hooks.Provider
 import com.jaqxues.akrolyb.sample.prefs.Preferences
-import com.jaqxues.akrolyb.utils.CollectableDec
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
@@ -42,7 +41,7 @@ class HookManager : IXposedHookLoadPackage {
                     Provider.features.loadAll(
                         lpparam.classLoader,
                         param.args[0] as Context,
-                        CollectableDec.Class(Declarations::class)
+                        Declarations::class
                     )
 
                     findAndHookMethod("com.some.example.app.SomeActivity", lpparam.classLoader,
