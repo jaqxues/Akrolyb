@@ -23,20 +23,18 @@ dependencies {
 
 packCompiler {
     attributes = [
-            Development    : true,
+            Development    : false,
+            PackImpl  : "com.jaqxues.akrolyb.sample.pack.PackImpl",
             PackVersion    : "1.0.0",
             PackVersionCode: 1,
-            MinApkVersion  : 1,
-            PackImplClass  : "com.jaqxues.akrolyb.sample.pack.PackImpl",
+            MinApkVersionCode  : 1,
     ]
     getJarName = { attributes ->
-        return new StringBuilder("Pack_v")
-                .append(attributes["PackVersion"])
-                .toString()
+        return "Pack"
     }
     adbPush = {
         defaultPath = "/storage/emulated/0/"
-        directory = "Akrolyb/Packs"
+        directory = "Akrolyb"
         deviceConfigFile = file("../Secrets/AdbPushConfig.json")
     }
 }
