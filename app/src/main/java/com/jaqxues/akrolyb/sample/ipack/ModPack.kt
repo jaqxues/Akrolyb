@@ -26,15 +26,4 @@ object PackFactory: PackFactoryBase<PackMetadata>() {
 
     override fun buildMeta(attributes: Attributes, context: Context, file: File) =
         PackMetadata.toPackMetadata(attributes, context, file)
-
-    override fun performChecks(packMetadata: PackMetadata, context: Context, file: File) {
-        // fixme Detecting Pack in App ClassLoader, but configuration looks fine
-        try {
-            super.performChecks(packMetadata, context, file)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            if (e.message == "Detected Pack in Classloader") return
-            else throw e
-        }
-    }
 }
