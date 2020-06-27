@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
             val packFile = File(Environment.getExternalStorageDirectory(), "Akrolyb/Pack.jar")
             if (packFile.exists()) {
                 try {
-                    val value = Security.certificateFromApk(this, BuildConfig.APPLICATION_ID)
+                    val value = if (BuildConfig.DEBUG) null else Security.certificateFromApk(this, BuildConfig.APPLICATION_ID)
                     val pack: ModPack = ModPackBase.buildPack(
                         this, packFile, value, PackFactory
                     )
