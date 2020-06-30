@@ -44,8 +44,6 @@ abstract class PackFactoryBase<T : IPackMetadata> {
             throw IllegalStateException("Developer Pack with non-debuggable Apk")
         if (packMetadata.minApkVersionCode > data.versionCode)
             throw IllegalStateException("Pack requires newer Apk")
-        if (data.appId.endsWith(".pack") || data.flavor == "pack")
-            throw IllegalStateException("Detected Pack Flavor as current APK Build")
         try {
             ModPackBase::class.java.classLoader!!.loadClass(packMetadata.packImplClass)
             throw IllegalStateException("Detected Pack in Classloader")
@@ -53,4 +51,4 @@ abstract class PackFactoryBase<T : IPackMetadata> {
     }
 }
 
-data class AppData(val versionCode: Int, val debug: Boolean, val appId: String, val flavor: String)
+data class AppData(val versionCode: Int, val debug: Boolean)

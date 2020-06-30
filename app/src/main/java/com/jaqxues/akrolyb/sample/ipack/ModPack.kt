@@ -22,7 +22,7 @@ abstract class ModPack(metadata: PackMetadata) : ModPackBase<PackMetadata>(metad
 
 object PackFactory: PackFactoryBase<PackMetadata>() {
     override val appData: AppData
-        get() = AppData(BuildConfig.VERSION_CODE, BuildConfig.DEBUG, BuildConfig.APPLICATION_ID, BuildConfig.FLAVOR)
+        get() = AppData(BuildConfig.VERSION_CODE, BuildConfig.DEBUG)
 
     override fun buildMeta(attributes: Attributes, context: Context, file: File) =
         PackMetadata.toPackMetadata(attributes, context, file)
