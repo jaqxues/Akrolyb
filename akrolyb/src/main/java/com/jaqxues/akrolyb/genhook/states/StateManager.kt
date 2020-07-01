@@ -39,27 +39,27 @@ class StateManager {
         list.add(signal())
     }
 
-    internal fun addCallError(feature: Feature, dec: MemberDec, ex: Exception) {
+    internal fun addCallError(feature: Feature, dec: MemberDec, ex: Throwable) {
         safeAddWarn(feature::class) { WarnSignal.MethodCallError(dec, ex) }
     }
 
-    internal fun addHookError(dec: MemberDec, feature: Feature, ex: Exception) {
+    internal fun addHookError(dec: MemberDec, feature: Feature, ex: Throwable) {
         safeAddWarn(feature::class) { WarnSignal.MethodHookError(dec, ex) }
     }
 
-    internal fun addVarError(feature: Feature, dec: VariableDec<*>, ex: Exception) {
+    internal fun addVarError(feature: Feature, dec: VariableDec<*>, ex: Throwable) {
         safeAddWarn(feature::class) { WarnSignal.UnresolvedVar(dec, ex) }
     }
 
-    internal fun addAddInsFieldError(feature: Feature, dec: AddInsField<*>, ex: Exception) {
+    internal fun addAddInsFieldError(feature: Feature, dec: AddInsField<*>, ex: Throwable) {
         safeAddWarn(feature::class) { WarnSignal.AddInsFieldError(dec, ex) }
     }
 
-    internal fun addLateInitAbort(feature: Feature, ex: Exception) {
+    internal fun addLateInitAbort(feature: Feature, ex: Throwable) {
         aborts[feature::class.java] = AbortSignal.LateInit(ex)
     }
 
-    internal fun addHookAbort(feature: Feature, ex: Exception) {
+    internal fun addHookAbort(feature: Feature, ex: Throwable) {
         aborts[feature::class.java] = AbortSignal.Hooks(ex)
     }
 

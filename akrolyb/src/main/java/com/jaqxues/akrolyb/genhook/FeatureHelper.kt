@@ -36,7 +36,8 @@ abstract class FeatureHelper : Feature {
                 // Inheritance, call method on child
                 obj.javaClass.name == method.classDec.className
             ) {
-                return (resolvedMembers[method] as? Method ?: throw AssertionError("Method not resolved"))
+                return (resolvedMembers[method] as? Method
+                    ?: throw AssertionError("Method not resolved"))
                     .invoke(obj, *params)
             } else {
                 return XposedHelpers.callMethod(obj, method.methodName, *params)
@@ -57,10 +58,16 @@ abstract class FeatureHelper : Feature {
     }
 
     protected fun hookConstructor(constructor: ConstructorDec, hook: XC_MethodHook) {
-        tryHook(constructor) { XposedBridge.hookMethod(resolvedMembers[constructor], hook).addToUnhooks() }
+        tryHook(constructor) {
+            XposedBridge.hookMethod(resolvedMembers[constructor], hook).addToUnhooks()
+        }
     }
 
-    protected fun hookAllMethods(methodDec: MethodDec, classLoader: ClassLoader, hook: XC_MethodHook) {
+    protected fun hookAllMethods(
+        methodDec: MethodDec,
+        classLoader: ClassLoader,
+        hook: XC_MethodHook
+    ) {
         tryHook(methodDec) {
             XposedBridge.hookAllMethods(
                 XposedHelpers.findClass(methodDec.classDec.className, classLoader),
@@ -136,7 +143,11 @@ abstract class FeatureHelper : Feature {
         }
 
     // Convenience Methods
-    protected fun <T> VariableDec<T>.setStaticVar(classDec: ClassDec, classLoader: ClassLoader, value: T) {
+    protected fun <T> VariableDec<T>.setStaticVar(
+        classDec: ClassDec,
+        classLoader: ClassLoader,
+        value: T
+    ) {
         tryVar { setStaticVar(classDec.findClass(classLoader), value) }
     }
 
@@ -202,7 +213,8 @@ abstract class FeatureHelper : Feature {
 
     internal companion object {
         private lateinit var resolvedMembers: Map<MemberDec, Member>
-        private var unhookMap = mutableMapOf<KClass<out FeatureHelper>, MutableList<XC_MethodHook.Unhook>>()
+        private var unhookMap =
+            mutableMapOf<KClass<out FeatureHelper>, MutableList<XC_MethodHook.Unhook>>()
         private lateinit var activeFeatures: List<FeatureHelper>
 
         fun loadAll(
@@ -218,13 +230,18 @@ abstract class FeatureHelper : Feature {
             if (activeFeatures.isEmpty())
                 return
 
-            resolveMembers(classLoader, activeFeatures.map { it::class.java }, stateManager, *hookDefs)
+            resolveMembers(
+                classLoader,
+                activeFeatures.map { it::class.java },
+                stateManager,
+                *hookDefs
+            )
 
             for (feature in activeFeatures) {
                 feature.stateManager = stateManager
                 try {
                     feature.loadFeature(classLoader, context)
-                } catch (ex: Exception) {
+                } catch (ex: Throwable) {
                     stateManager.addHookAbort(feature, ex)
                 }
             }
@@ -234,7 +251,7 @@ abstract class FeatureHelper : Feature {
             for (feature in activeFeatures) {
                 try {
                     feature.lateInit(classLoader, activity)
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     stateManager.addLateInitAbort(feature, e)
                 }
             }
