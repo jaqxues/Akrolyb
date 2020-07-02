@@ -241,8 +241,8 @@ abstract class FeatureHelper : Feature {
                 feature.stateManager = stateManager
                 try {
                     feature.loadFeature(classLoader, context)
-                } catch (ex: Throwable) {
-                    stateManager.addHookAbort(feature, ex)
+                } catch (t: Throwable) {
+                    stateManager.addHookAbort(feature, t)
                 }
             }
         }

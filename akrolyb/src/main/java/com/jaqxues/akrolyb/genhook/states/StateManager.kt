@@ -39,28 +39,28 @@ class StateManager {
         list.add(signal())
     }
 
-    internal fun addCallError(feature: Feature, dec: MemberDec, ex: Throwable) {
-        safeAddWarn(feature::class) { WarnSignal.MethodCallError(dec, ex) }
+    internal fun addCallError(feature: Feature, dec: MemberDec, t: Throwable) {
+        safeAddWarn(feature::class) { WarnSignal.MethodCallError(dec, t) }
     }
 
-    internal fun addHookError(dec: MemberDec, feature: Feature, ex: Throwable) {
-        safeAddWarn(feature::class) { WarnSignal.MethodHookError(dec, ex) }
+    internal fun addHookError(dec: MemberDec, feature: Feature, t: Throwable) {
+        safeAddWarn(feature::class) { WarnSignal.MethodHookError(dec, t) }
     }
 
-    internal fun addVarError(feature: Feature, dec: VariableDec<*>, ex: Throwable) {
-        safeAddWarn(feature::class) { WarnSignal.UnresolvedVar(dec, ex) }
+    internal fun addVarError(feature: Feature, dec: VariableDec<*>, t: Throwable) {
+        safeAddWarn(feature::class) { WarnSignal.UnresolvedVar(dec, t) }
     }
 
-    internal fun addAddInsFieldError(feature: Feature, dec: AddInsField<*>, ex: Throwable) {
-        safeAddWarn(feature::class) { WarnSignal.AddInsFieldError(dec, ex) }
+    internal fun addAddInsFieldError(feature: Feature, dec: AddInsField<*>, t: Throwable) {
+        safeAddWarn(feature::class) { WarnSignal.AddInsFieldError(dec, t) }
     }
 
-    internal fun addLateInitAbort(feature: Feature, ex: Throwable) {
-        aborts[feature::class.java] = AbortSignal.LateInit(ex)
+    internal fun addLateInitAbort(feature: Feature, t: Throwable) {
+        aborts[feature::class.java] = AbortSignal.LateInit(t)
     }
 
-    internal fun addHookAbort(feature: Feature, ex: Throwable) {
-        aborts[feature::class.java] = AbortSignal.Hooks(ex)
+    internal fun addHookAbort(feature: Feature, t: Throwable) {
+        aborts[feature::class.java] = AbortSignal.Hooks(t)
     }
 
     fun getGlobalState(): State {
