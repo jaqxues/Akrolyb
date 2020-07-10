@@ -251,8 +251,8 @@ abstract class FeatureHelper : Feature {
             for (feature in activeFeatures) {
                 try {
                     feature.lateInit(classLoader, activity)
-                } catch (e: Throwable) {
-                    stateManager.addLateInitAbort(feature, e)
+                } catch (t: Throwable) {
+                    stateManager.addLateInitAbort(feature, t)
                 }
             }
         }

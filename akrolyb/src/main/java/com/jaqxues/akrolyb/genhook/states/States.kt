@@ -41,8 +41,8 @@ sealed class AbortSignal : StateReason() {
 }
 
 sealed class State {
-    class Aborted(val signals: List<StateReason>) : State()
-    class Warning(val signals: List<WarnSignal>) : State()
+    data class Aborted(val signals: List<StateReason>) : State()
+    data class Warning(val signals: List<WarnSignal>) : State()
     object Success : State()
 }
 
