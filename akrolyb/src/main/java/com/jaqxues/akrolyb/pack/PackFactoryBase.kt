@@ -46,7 +46,7 @@ abstract class PackFactoryBase<T : IPackMetadata> {
             throw IllegalStateException("Pack requires newer Apk")
         try {
             ModPackBase::class.java.classLoader!!.loadClass(packMetadata.packImplClass)
-            throw IllegalStateException("Detected Pack in Classloader")
+            throw IllegalStateException("Detected Pack in Classloader. You might want to adjust your run configuration to not install the pack as dynamic feature.")
         } catch (ignored: ClassNotFoundException) {}
     }
 }
