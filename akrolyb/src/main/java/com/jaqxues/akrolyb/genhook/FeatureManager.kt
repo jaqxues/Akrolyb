@@ -20,7 +20,7 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
     private val optionalFeatures = featureProvider.optionalFeatures
     private val featureNames = forcedFeatures + optionalFeatures
     private val disabledFeatures = featureProvider.disabledFeatures
-    private val hookDefs = featureProvider.hookDefs
+    private var hookDefs = featureProvider.hookDefs
 
     val stateDispatcher = StateDispatcher()
 
@@ -47,11 +47,15 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
         return list.map { it.java.newInstance() }
     }
 
+    fun addHookDefs(vararg any: Any) {
+        hookDefs = (hookDefs.toList() + any.toList()).toTypedArray()
+    }
+
     /**
      * Requests that all loaded features inject their hooks
      */
     fun loadAll(classLoader: ClassLoader, context: Context) {
-        FeatureHelper.loadAll(classLoader, context, this, stateDispatcher, *hookDefs)
+        FeatureHelper.loadAll(classLoader, context, this, stateDispatcher, * hookDefs)
     }
 
     /**
@@ -63,12 +67,14 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
     }
 
     fun unhookFeatureByClass(feature: KClass<out T>) = FeatureHelper.unhookByFeature(feature)
-    fun unhookFeatureByName(feature: String) = FeatureHelper.unhookByFeature(getFeatureNameByClass(feature))
+    fun unhookFeatureByName(feature: String) = FeatureHelper.unhookByFeature(getFeatureClassByName(feature))
 
-    fun getFeatureNameByClass(featureName: String): KClass<out T> =
+    fun getFeatureClassByName(featureName: String): KClass<out T> =
         featureNames[featureName] ?: throw IllegalArgumentException("Feature $featureName not resolved")
-    fun getFeatureClassByName(canonicalName: String) =
-        featureNames.entries.find { (k, _) -> k == canonicalName }?.value ?: throw IllegalArgumentException("Feature $canonicalName not resolved")
+
+    fun getFeatureNameByClass(feature: KClass<out T>) =
+        featureNames.entries.find { (_, v) -> v == feature }?.key
+            ?: throw IllegalArgumentException("Feature ${feature.qualifiedName} not resolved")
 
     fun isFeatureEnabled(key: String): Boolean {
         checkOptionalFeatureKey(key)
