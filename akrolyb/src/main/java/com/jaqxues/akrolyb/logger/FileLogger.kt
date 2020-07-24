@@ -17,8 +17,6 @@ import java.util.concurrent.TimeUnit
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Akrolyb.<br>
  * Date: 12.05.20 - Time 12:35.
  */
-private val WRITE_DEBUG_DATA_INTERVAL = TimeUnit.MINUTES.toMillis(20)
-private const val MAX_LOG_FILES = 20
 const val TAG = "Akrolyb/FileLogger"
 
 @SuppressLint("LogNotTimber")
@@ -41,7 +39,7 @@ open class FileLogger(val file: File) : Timber.Tree() {
         FileWriter(file, true).buffered().use { writer ->
             try {
                 while (isActive) {
-                    if (System.currentTimeMillis() - lastWritten > WRITE_DEBUG_DATA_INTERVAL)
+                    if (System.currentTimeMillis() - lastWritten > debugInterval)
                         appendDebugData(writer)
                     channel.receive().writeInLogFormat(writer)
                     writer.flush()
@@ -80,12 +78,12 @@ open class FileLogger(val file: File) : Timber.Tree() {
                     |
                     |Additional Debug Data:
                 """.trimMargin())
-            append(getDebugData())
+            append(debugData)
         }
     }
 
-    protected open fun getDebugData(): String = ""
-
+    protected open val debugData: String = ""
+    protected open val debugInterval: Long = TimeUnit.HOURS.toMillis(1)
     protected open fun writeLogItem(appendable: Appendable, logItem: LogItem) = logItem.writeInLogFormat(appendable)
 
     fun stop() {
@@ -93,13 +91,13 @@ open class FileLogger(val file: File) : Timber.Tree() {
     }
 
     companion object {
-        fun getLogFile(folder: File, throwLogs: Boolean = true): File {
+        fun getLogFile(folder: File, throwLogs: Int = 20): File {
             if (!folder.exists()) throw IllegalArgumentException("Folder does not exist")
 
-            if (throwLogs) {
+            if (throwLogs > 0) {
                 val logFiles = folder.listFiles() ?: emptyArray()
-                if (logFiles.size > MAX_LOG_FILES) {
-                    var toDelete = logFiles.size - MAX_LOG_FILES
+                if (logFiles.size > throwLogs) {
+                    var toDelete = logFiles.size - throwLogs
                     logFiles.sortedBy { it.lastModified() }.forEach {
                         if (toDelete <= 0) return@forEach
                         it.delete()
