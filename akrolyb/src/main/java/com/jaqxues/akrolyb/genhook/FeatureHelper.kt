@@ -78,14 +78,14 @@ abstract class FeatureHelper : Feature {
     }
 
     protected fun newInstance(constructorDec: ConstructorDec, vararg params: Any?): Any? {
-        try {
-            return (resolvedMembers[constructorDec] as? Constructor<*>
+        return try {
+            (resolvedMembers[constructorDec] as? Constructor<*>
                 ?: throw AssertionError("Constructor not resolved"))
                 .newInstance(*params)
         } catch (e: Exception) {
             Timber.e(e)
             stateDispatcher.addHookError(this, constructorDec, e)
-            return null
+            null
         }
     }
 
@@ -126,6 +126,7 @@ abstract class FeatureHelper : Feature {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     protected fun <T> VariableDec<T>.getStaticVar(clazz: Class<*>) =
         tryVar {
             checkVal { XposedHelpers.getStaticObjectField(clazz, name) as T }
@@ -137,6 +138,7 @@ abstract class FeatureHelper : Feature {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     protected fun <T> VariableDec<T>.getVar(obj: Any) =
         tryVar {
             checkVal { XposedHelpers.getObjectField(obj, name) as T }
@@ -177,19 +179,23 @@ abstract class FeatureHelper : Feature {
      * @return The previously stored value for this instance/key combination, or null if there was none.
      */
     // === Additional Fields on Objects ==
+    @Suppress("UNCHECKED_CAST")
     fun <T> AddInsField<T>.set(obj: Any, value: T?) =
         tryAddInsField { XposedHelpers.setAdditionalInstanceField(obj, id, value) as T? }
 
+    @Suppress("UNCHECKED_CAST")
     fun <T> AddInsField<T>.get(obj: Any) =
         tryAddInsField { XposedHelpers.getAdditionalInstanceField(obj, id) as T? }
 
     // === Static Additional Fields ==
+    @Suppress("UNCHECKED_CAST")
     fun <T> AddInsField<T>.get(clazz: Class<*>) =
         tryAddInsField { XposedHelpers.getAdditionalStaticField(clazz, id) as T? }
 
     /**
      * @return The previously stored value for this instance/key combination, or null if there was none.
      */
+    @Suppress("UNCHECKED_CAST")
     fun <T> AddInsField<T>.set(clazz: Class<*>, value: T?) =
         tryAddInsField { XposedHelpers.setAdditionalStaticField(clazz, id, value) as T? }
 
