@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Build
 import android.util.Log
 import com.jaqxues.akrolyb.BuildConfig
-import com.jaqxues.akrolyb.utils.ddMyyyy
+import com.jaqxues.akrolyb.utils.yyyyMMdd
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import timber.log.Timber
@@ -22,7 +22,7 @@ private const val MAX_LOG_FILES = 20
 const val TAG = "Akrolyb/FileLogger"
 
 @SuppressLint("LogNotTimber")
-class FileLogger(val file: File) : Timber.Tree() {
+open class FileLogger(val file: File) : Timber.Tree() {
     private val job = SupervisorJob()
     private val channel = Channel<LogItem>(Channel.UNLIMITED)
     private var lastWritten: Long = -1
@@ -51,7 +51,7 @@ class FileLogger(val file: File) : Timber.Tree() {
                 Log.i(TAG, "Logging Coroutine was cancelled. Processing the rest of the items in the Channel")
                 var item: LogItem?
                 while (channel.poll().also { item = it } != null) {
-                    item!!.writeInLogFormat(writer)
+                    writeLogItem(writer, item!!)
                 }
                 writer.flush()
             } catch (e: IOException) {
@@ -73,18 +73,27 @@ class FileLogger(val file: File) : Timber.Tree() {
     private fun appendDebugData(appendable: Appendable) {
         appendable.apply {
             append(
-                """ |Akrolyb Version: ${BuildConfig.VERSION_NAME}
+                """ |
+|                   |Debug Data Report:
                     |OS Version: ${Build.VERSION.SDK_INT} - ${Build.VERSION.CODENAME}
+                    |Akrolyb Version: ${BuildConfig.VERSION_NAME}
+                    |
+                    |Additional Debug Data:
                 """.trimMargin())
+            append(getDebugData())
         }
     }
+
+    protected open fun getDebugData(): String = ""
+
+    protected open fun writeLogItem(appendable: Appendable, logItem: LogItem) = logItem.writeInLogFormat(appendable)
 
     fun stop() {
         job.cancel()
     }
 
     companion object {
-        fun getInstance(folder: File, throwLogs: Boolean = true, autoStart: Boolean = true): FileLogger {
+        fun getLogFile(folder: File, throwLogs: Boolean = true): File {
             if (!folder.exists()) throw IllegalArgumentException("Folder does not exist")
 
             if (throwLogs) {
@@ -98,9 +107,7 @@ class FileLogger(val file: File) : Timber.Tree() {
                     }
                 }
             }
-            val file = File(folder, "log_${Date(System.currentTimeMillis()).ddMyyyy}.txt")
-
-            return FileLogger(file).apply { if(autoStart) startLogger() }
+            return File(folder, "log_${Date(System.currentTimeMillis()).yyyyMMdd}.txt")
         }
     }
 }

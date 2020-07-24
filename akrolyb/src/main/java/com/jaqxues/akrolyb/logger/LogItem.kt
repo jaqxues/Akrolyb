@@ -9,7 +9,7 @@ import java.util.*
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Akrolyb.<br>
  * Date: 12.05.20 - Time 19:20.
  */
-internal data class LogItem(val priority: Int, val tag: String?, val message: String, val t: Throwable?, val time: Long = System.currentTimeMillis()) {
+data class LogItem(val priority: Int, val tag: String?, val message: String, val t: Throwable?, val time: Long = System.currentTimeMillis()) {
     fun writeInLogFormat(appendable: Appendable) {
         appendable.apply {
             append(" [ ")

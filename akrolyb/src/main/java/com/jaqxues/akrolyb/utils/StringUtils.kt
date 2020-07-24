@@ -10,9 +10,10 @@ import java.util.*
  */
 object StringUtils {
     val HHmmssSSS = SimpleDateFormat("HH:mm:ss.SSS", Locale.ENGLISH)
-    val ddMyyyy = SimpleDateFormat("dd-M-yyyy", Locale.ENGLISH)
+    val ddMMyyyy = SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH)
+    val yyyyMMdd = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
 }
 val Date.HHmmssSSS: String
     get() = StringUtils.HHmmssSSS.format(this)
-val Date.ddMyyyy: String
-    get() = StringUtils.ddMyyyy.format(this)
+val Date.yyyyMMdd: String
+    get() = StringUtils.yyyyMMdd.format(this)
