@@ -6,7 +6,7 @@ import com.jaqxues.akrolyb.genhook.decs.*
 import com.jaqxues.akrolyb.genhook.decs.MemberDec.ConstructorDec
 import com.jaqxues.akrolyb.genhook.decs.MemberDec.MethodDec
 import com.jaqxues.akrolyb.genhook.states.ClassNotFoundException
-import com.jaqxues.akrolyb.genhook.states.StateManager
+import com.jaqxues.akrolyb.genhook.states.StateDispatcher
 import com.jaqxues.akrolyb.utils.Predicate
 import com.jaqxues.akrolyb.utils.collectAll
 import de.robv.android.xposed.XC_MethodHook
@@ -28,7 +28,7 @@ import kotlin.reflect.KClass
  * find classes and hooks.
  */
 abstract class FeatureHelper : Feature {
-    private lateinit var stateManager: StateManager
+    private lateinit var stateDispatcher: StateDispatcher
     protected fun callMethod(obj: Any?, method: MethodDec, vararg params: Any?): Any? {
         try {
             // obj == null -> invoke Static Method, must be resolved
@@ -44,7 +44,7 @@ abstract class FeatureHelper : Feature {
             }
         } catch (ex: Exception) {
             Timber.e(ex)
-            stateManager.addCallError(this, method, ex)
+            stateDispatcher.addCallError(this, method, ex)
             return null
         }
     }
@@ -84,7 +84,7 @@ abstract class FeatureHelper : Feature {
                 .newInstance(*params)
         } catch (e: Exception) {
             Timber.e(e)
-            stateManager.addHookError(constructorDec, this, e)
+            stateDispatcher.addHookError(this, constructorDec, e)
             return null
         }
     }
@@ -113,7 +113,7 @@ abstract class FeatureHelper : Feature {
             action()
         } catch (e: Exception) {
             Timber.e(e)
-            stateManager.addHookError(dec, this, e)
+            stateDispatcher.addHookError(this, dec, e)
         }
     }
 
@@ -165,7 +165,7 @@ abstract class FeatureHelper : Feature {
             action()
         } catch (ex: Exception) {
             Timber.e(ex)
-            stateManager.addVarError(this@FeatureHelper, this, ex)
+            stateDispatcher.addVarError(this@FeatureHelper, this, ex)
             null
         }
     }
@@ -205,7 +205,7 @@ abstract class FeatureHelper : Feature {
             action()
         } catch (ex: Exception) {
             Timber.e(ex)
-            stateManager.addAddInsFieldError(this@FeatureHelper, this, ex)
+            stateDispatcher.addAddInsFieldError(this@FeatureHelper, this, ex)
             null
         }
     }
@@ -221,7 +221,7 @@ abstract class FeatureHelper : Feature {
             classLoader: ClassLoader,
             context: Context,
             featureManager: FeatureManager<out FeatureHelper>,
-            stateManager: StateManager,
+            stateDispatcher: StateDispatcher,
             vararg hookDefs: Any
         ) {
             check(unhookMap.isEmpty()) { "Some Features already loaded" }
@@ -233,26 +233,26 @@ abstract class FeatureHelper : Feature {
             resolveMembers(
                 classLoader,
                 activeFeatures.map { it::class.java },
-                stateManager,
+                stateDispatcher,
                 *hookDefs
             )
 
             for (feature in activeFeatures) {
-                feature.stateManager = stateManager
+                feature.stateDispatcher = stateDispatcher
                 try {
                     feature.loadFeature(classLoader, context)
                 } catch (t: Throwable) {
-                    stateManager.addHookAbort(feature, t)
+                    stateDispatcher.addHookAbort(feature, t)
                 }
             }
         }
 
-        fun lateInitAll(classLoader: ClassLoader, activity: Activity, stateManager: StateManager) {
+        fun lateInitAll(classLoader: ClassLoader, activity: Activity, stateDispatcher: StateDispatcher) {
             for (feature in activeFeatures) {
                 try {
                     feature.lateInit(classLoader, activity)
                 } catch (t: Throwable) {
-                    stateManager.addLateInitAbort(feature, t)
+                    stateDispatcher.addLateInitAbort(feature, t)
                 }
             }
         }
@@ -281,7 +281,7 @@ abstract class FeatureHelper : Feature {
         private fun resolveMembers(
             classLoader: ClassLoader,
             features: List<Class<out FeatureHelper>>,
-            stateManager: StateManager,
+            stateDispatcher: StateDispatcher,
             vararg hookDefs: Any
         ) {
             // Nullable Class means unresolved class, should be skipped for other members of class
@@ -306,15 +306,15 @@ abstract class FeatureHelper : Feature {
                 if (className in cache) {
                     resolvedClass = cache[className]
                     if (resolvedClass == null) {
-                        stateManager.addUnresolvedMember(member)
+                        stateDispatcher.addUnresolvedMember(member)
                         continue // continue if class could not be resolved previously
                     }
                 } else {
                     try {
                         resolvedClass = member.classDec.findClass(classLoader, false)
                     } catch (ex: ClassNotFoundException) {
-                        stateManager.addUnresolvedClass(member.classDec, ex)
-                        stateManager.addUnresolvedMember(member)
+                        stateDispatcher.addUnresolvedClass(member.classDec, ex)
+                        stateDispatcher.addUnresolvedMember(member)
                         // Mark as unresolved in caching
                         cache[className] = null
                         continue
@@ -326,7 +326,7 @@ abstract class FeatureHelper : Feature {
                 resolved[member] = try {
                     member.findMember(resolvedClass)
                 } catch (ex: NoSuchMethodError) {
-                    stateManager.addUnresolvedMember(member, ex)
+                    stateDispatcher.addUnresolvedMember(member, ex)
                     continue
                 }
             }

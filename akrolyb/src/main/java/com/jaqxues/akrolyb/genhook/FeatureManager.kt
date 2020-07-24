@@ -2,7 +2,7 @@ package com.jaqxues.akrolyb.genhook
 
 import android.app.Activity
 import android.content.Context
-import com.jaqxues.akrolyb.genhook.states.StateManager
+import com.jaqxues.akrolyb.genhook.states.StateDispatcher
 import kotlin.reflect.KClass
 
 
@@ -22,7 +22,7 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
     private val disabledFeatures = featureProvider.disabledFeatures
     private val hookDefs = featureProvider.hookDefs
 
-    val stateManager = StateManager()
+    val stateDispatcher = StateDispatcher()
 
     /**
      * Filters the features from the [FeatureProvider] to check which optional features are enabled. In case no optional
@@ -51,7 +51,7 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
      * Requests that all loaded features inject their hooks
      */
     fun loadAll(classLoader: ClassLoader, context: Context) {
-        FeatureHelper.loadAll(classLoader, context, this, stateManager, *hookDefs)
+        FeatureHelper.loadAll(classLoader, context, this, stateDispatcher, *hookDefs)
     }
 
     /**
@@ -59,7 +59,7 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
      * other values. Usually called from a hooked [Activity.onCreate].
      */
     fun lateInitAll(classLoader: ClassLoader, activity: Activity) {
-        FeatureHelper.lateInitAll(classLoader, activity, stateManager)
+        FeatureHelper.lateInitAll(classLoader, activity, stateDispatcher)
     }
 
     fun unhookFeatureByClass(feature: KClass<out T>) = FeatureHelper.unhookByFeature(feature)
