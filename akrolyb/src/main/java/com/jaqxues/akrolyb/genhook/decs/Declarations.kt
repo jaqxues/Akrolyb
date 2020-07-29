@@ -93,6 +93,20 @@ sealed class MemberDec(
             is ConstructorDec -> findConstructor(clazz) as Member
             is MethodDec -> findMethod(clazz) as Member
         }
+
+    fun prettyFormat() = buildString {
+        append(classDec.className)
+        append(".")
+        append(if (this@MemberDec is MethodDec) methodName else "<init>")
+        append("(")
+        params.map {
+            if (it is String) it
+            else if (it is ClassDec) it.className
+            else if (it is Class<*>) it.name
+            else error("Illegal Type for Parameter")
+        }.joinTo(buffer = this, separator = ", ")
+        append(")")
+    }
 }
 
 /**
