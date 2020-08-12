@@ -7,8 +7,8 @@ import java.lang.reflect.Field
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Akrolyb.<br>
  * Date: 12.08.20 - Time 15:21.
  */
-object GenerateGraphGuardDecs {
-    fun getNamedFDecs(fieldDecs: Any) =
+object GraphGuard {
+    fun generateNamedFDecs(fieldDecs: Any) =
         fieldDecs::class.java.declaredFields.mapNotNull { f ->
             f.isAccessible = true
             val x = f.get(fieldDecs)
@@ -18,7 +18,7 @@ object GenerateGraphGuardDecs {
             "'${f.name}': ${x.formatToGraphGuard(f)}"
         }
 
-    fun getNamedMDecs(memberDecs: Any) =
+    fun generateNamedMDecs(memberDecs: Any) =
         memberDecs::class.java.declaredFields.mapNotNull { f ->
             f.isAccessible = true
             val x = f.get(memberDecs)
@@ -27,7 +27,7 @@ object GenerateGraphGuardDecs {
             "'${f.name}': ${x.formatToGraphGuard(f)}"
         }
 
-    fun getNamedCDecs(classDecs: Any) =
+    fun generateNamedCDecs(classDecs: Any) =
         classDecs::class.java.declaredFields.mapNotNull { f ->
             f.isAccessible = true
             val c = f.get(classDecs)
@@ -39,27 +39,25 @@ object GenerateGraphGuardDecs {
 
     fun printGeneratedDecs(classDecs: Any, memberDecs: Any, fieldDecs: Any) =
         printGeneratedDecs(
-            arrayOf(
-                classDecs
-            ), arrayOf(memberDecs), arrayOf(fieldDecs)
+            arrayOf(classDecs), arrayOf(memberDecs), arrayOf(fieldDecs)
         )
 
     fun printGeneratedDecs(classDecs: Array<Any>, memberDecs: Array<Any>, fieldDecs: Array<Any>) {
 
         println("named_c_decs = {")
-        println(classDecs.flatMap(::getNamedCDecs).joinToString(separator = ",\n") { "    $it" })
+        println(classDecs.flatMap(::generateNamedCDecs).joinToString(separator = ",\n") { "    $it" })
         println("}")
 
         println()
 
         println("named_m_decs = {")
-        println(memberDecs.flatMap(::getNamedMDecs).joinToString(separator = ",\n") { "    $it" })
+        println(memberDecs.flatMap(::generateNamedMDecs).joinToString(separator = ",\n") { "    $it" })
         println("}")
 
         println()
 
         println("named_f_decs = {")
-        println(fieldDecs.flatMap(::getNamedFDecs).joinToString(separator = ",\n") { "    $it" })
+        println(fieldDecs.flatMap(::generateNamedFDecs).joinToString(separator = ",\n") { "    $it" })
         println("}")
     }
 }
