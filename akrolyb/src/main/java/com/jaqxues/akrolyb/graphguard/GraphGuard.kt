@@ -22,7 +22,9 @@ object GraphGuard {
         memberDecs::class.java.declaredFields.mapNotNull { f ->
             f.isAccessible = true
             val x = f.get(memberDecs)
-            if (x !is MemberDec) return@mapNotNull null
+
+            if (x !is MemberDec || f.isAnnotationPresent(Ignore::class.java))
+                return@mapNotNull null
 
             "'${f.name}': ${x.formatToGraphGuard(f)}"
         }

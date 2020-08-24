@@ -22,3 +22,11 @@ annotation class SkipParams
  */
 @Target(AnnotationTarget.FIELD)
 annotation class FieldClass(val cls: Array<String>)
+
+/**
+ * Ignores the annotated MemberDeclaration. This allows to use Declarations on the Java/Android
+ * classes, such as "android.graphics.Bitmap". When generating Decs for CodeGen, these specified
+ * Declarations will be ignored, as they do not need to be updated
+ */
+@Target(AnnotationTarget.FIELD)
+annotation class Ignore
