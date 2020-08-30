@@ -41,6 +41,7 @@ object Security {
 
         // All the entries are signed correctly. Going through every entry in [toCheck] to verify the actual Signature
         // Every file must be signed except files in META-INF
+        val clsDexRegex = "classes\\d*\\.dex".toRegex()
         for (entry in toCheck) {
             val certs = entry.certificates
 
@@ -51,7 +52,7 @@ object Security {
                 // Checking the actual certificates to check for corresponding certificate from the provided [X509Certificate]
                 // The jar may be signed by multiple signers: see if one of them is the target certificate.
 
-                if (entry.name != "classes.dex") continue
+                if (!(entry.name matches clsDexRegex)) continue
 
                 var signedAsExpected = false
 
