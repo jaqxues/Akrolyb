@@ -96,10 +96,9 @@ abstract class ModPackBase<T : IPackMetadata>(metadata: T) {
             context: Context,
             packFile: File,
             certificate: X509Certificate? = null,
-            packBuilder: PackFactoryBase<T>
+            packBuilder: PackFactoryBase<T>,
+            metadata: T = extractMetadata(context, packFile, certificate, packBuilder)
         ): M {
-            val metadata = extractMetadata(context, packFile, certificate, packBuilder)
-
             try {
                 // Performing Checks if it safe to load the Pack in the current environment
                 packBuilder.performChecks(metadata, context, packFile)
