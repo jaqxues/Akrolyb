@@ -16,7 +16,7 @@ import java.util.jar.JarFile
  * Date: 14.04.20 - Time 21:53.
  */
 
-abstract class ModPackBase<T : IPackMetadata>(private val metadata: T) {
+abstract class ModPackBase<T : IPackMetadata>(metadata: T) {
     companion object {
         /**
          * Check Security to ensure the Pack has not been tampered with, the pack is signed correctly,
