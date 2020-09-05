@@ -18,6 +18,58 @@ import java.util.jar.JarFile
 
 abstract class ModPackBase<T : IPackMetadata>(private val metadata: T) {
     companion object {
+        /**
+         * Check Security to ensure the Pack has not been tampered with, the pack is signed correctly,
+         * and the pack has been signed with the given certificate to ensure a "trusted" and safe state.
+         */
+        fun performSecurityCheck(jarFile: JarFile, certificate: X509Certificate) {
+            try {
+                Security.checkSecurity(jarFile, certificate)
+            } catch (t: Throwable) {
+                throw PackSecurityException("Security Check and Signature Verification Failed", t)
+            }
+        }
+
+        fun performSecurityCheck(packFile: File, certificate: X509Certificate) =
+            openPackJar(packFile).use { performSecurityCheck(it, certificate) }
+
+        private fun openPackJar(packFile: File): JarFile {
+            if (!packFile.exists()) throw PackNotFoundException(packFile)
+            return JarFile(packFile)
+        }
+
+        fun <T : IPackMetadata> extractMetadata(
+            context: Context,
+            packFile: File,
+            certificate: X509Certificate? = null,
+            packBuilder: PackFactoryBase<T>
+        ): T {
+            // Open Jar File and extract the Manifest to parse the attributes in order to build PackMetadata objects.
+            // Since the jar is opened, it also checks security certificates etc. if a certificate is given.
+            val attributes = try {
+                openPackJar(packFile).use { jarFile ->
+                    if (certificate == null) {
+                        Timber.i("Skipping Security Checks on Pack. Strongly advised to provide a valid Certificate to check the Packs Signature")
+                    } else {
+                        performSecurityCheck(jarFile, certificate)
+                    }
+
+                    val manifest = jarFile.manifest ?: error("No Manifest in specified Jar")
+                    manifest.mainAttributes
+                }
+            } catch (t: Throwable) {
+                if (t is PackException)
+                    throw t
+                throw PackAttributesException(t)
+            }
+
+            return try {
+                // Parsing Attributes to a PackMetadata object
+                packBuilder.buildMeta(attributes, context, packFile)
+            } catch (t: Throwable) {
+                throw PackMetadataException(t)
+            }
+        }
 
         /**
          * Function to instantiate a Pack with all the given information. Performs basic checks with the given
@@ -46,42 +98,7 @@ abstract class ModPackBase<T : IPackMetadata>(private val metadata: T) {
             certificate: X509Certificate? = null,
             packBuilder: PackFactoryBase<T>
         ): M {
-            if (!packFile.exists()) throw PackNotFoundException(packFile)
-
-            // Open Jar File and extract the Manifest to parse the attributes in order to build PackMetadata objects.
-            // Since the jar is opened, it also checks security certificates etc. if a certificate is given.
-            val attributes = try {
-                JarFile(packFile).use { jarFile ->
-                    val manifest = jarFile.manifest ?: throw NullPointerException("No Manifest in specified Jar")
-
-                    if (certificate == null) {
-                        Timber.i("Skipping Security Checks on Pack. Strongly advised to provide a valid Certificate to check the Packs Signature")
-                    } else {
-                        // Check Security to ensure the Pack has not been tampered with, the pack is signed correctly,
-                        // and the pack has been signed with the given certificate to ensure a "trusted" and safe state.
-                        try {
-                            Security.checkSecurity(jarFile, certificate)
-                        } catch (t: Throwable) {
-                            throw PackSecurityException("Security Check and Signature Verification Failed", t)
-                        }
-                    }
-                    manifest.mainAttributes
-                }
-            } catch (t: Throwable) {
-                Timber.e(t)
-                if (t is PackException)
-                    throw t
-                throw PackMetadataException(t)
-            }
-
-            val metadata: T
-            try {
-                // Parsing Attributes to a PackMetadata object
-                metadata = packBuilder.buildMeta(attributes, context, packFile)
-            } catch (t: Throwable) {
-                Timber.e(t)
-                throw PackAttributesException(t)
-            }
+            val metadata = extractMetadata(context, packFile, certificate, packBuilder)
 
             try {
                 // Performing Checks if it safe to load the Pack in the current environment
@@ -101,14 +118,14 @@ abstract class ModPackBase<T : IPackMetadata>(private val metadata: T) {
                     )
                 }
             } catch (t: Throwable) {
-                Timber.e(t)
                 throw PackClassLoaderException(t)
             }
 
             // Reflection Part: Try to load the pack implementation class on the classloader and try to invoke its
             // constructor
             return try {
-                @Suppress("UNCHECKED_CAST") val clazz = classLoader.loadClass(metadata.packImplClass) as Class<out M>
+                @Suppress("UNCHECKED_CAST") val clazz =
+                    classLoader.loadClass(metadata.packImplClass) as Class<out M>
                 val constructor = clazz.getConstructor(metadata.javaClass)
 
                 constructor.newInstance(metadata) as M
@@ -119,9 +136,6 @@ abstract class ModPackBase<T : IPackMetadata>(private val metadata: T) {
                     is InvocationTargetException -> "Pack implementation constructor Invocation failed"
                     else -> "Unknown Error while instantiating Pack Implementation"
                 }
-
-                @Suppress("TimberExceptionLogging")
-                Timber.e(t, message)
                 throw PackReflectionException(message, t)
             }
         }
