@@ -2,7 +2,6 @@ package com.jaqxues.akrolyb.genhook
 
 import android.app.Activity
 import android.content.Context
-import androidx.annotation.StringRes
 
 
 /**
