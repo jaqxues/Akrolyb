@@ -55,3 +55,32 @@ abstract class ReplaceWrapper : XC_MethodReplacement() {
     @Throws(Throwable::class)
     protected abstract fun replace(param: MethodHookParam): Any?
 }
+
+inline fun before(crossinline hook: (XC_MethodHook.MethodHookParam) -> Unit) =
+    object : HookWrapper() {
+        override fun before(param: MethodHookParam) {
+            hook(param)
+        }
+    }
+
+inline fun after(crossinline hook: (XC_MethodHook.MethodHookParam) -> Unit) =
+    object : HookWrapper() {
+        override fun after(param: MethodHookParam) {
+            hook(param)
+        }
+    }
+
+inline fun replaceReturn(crossinline hook: (XC_MethodHook.MethodHookParam) -> Any?) =
+    object : ReplaceWrapper() {
+        override fun replace(param: MethodHookParam): Any? {
+            return hook(param)
+        }
+    }
+
+inline fun replace(crossinline hook: (XC_MethodHook.MethodHookParam) -> Unit) =
+    object : ReplaceWrapper() {
+        override fun replace(param: MethodHookParam): Any? {
+            hook(param)
+            return null
+        }
+    }
