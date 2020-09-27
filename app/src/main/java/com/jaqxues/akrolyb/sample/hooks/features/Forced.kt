@@ -12,8 +12,6 @@ import com.jaqxues.akrolyb.sample.hooks.Declarations
  * Date: 27.03.20 - Time 20:26.
  */
 class Forced : FeatureHelper() {
-    override val name = R.string.forced_title
-
     override fun loadFeature(classLoader: ClassLoader, context: Context) {
 
         hookMethod(Declarations.FORCED_METHOD, object: HookWrapper() {

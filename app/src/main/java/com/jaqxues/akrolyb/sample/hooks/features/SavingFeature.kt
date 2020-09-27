@@ -17,8 +17,6 @@ import java.io.File
  * Date: 27.03.20 - Time 20:30.
  */
 class SavingFeature: FeatureHelper() {
-    override val name = R.string.saving_title
-
     override fun loadFeature(classLoader: ClassLoader, context: Context) {
         hookConstructor(Declarations.INTERCEPT_SAVING, object : HookWrapper() {
             override fun after(param: MethodHookParam) {
