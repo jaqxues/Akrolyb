@@ -55,7 +55,7 @@ class PreferenceMap : ConcurrentHashMap<String, Any?> {
     }
 
     companion object {
-        val OBJ_NULL = Any()
+        internal val OBJ_NULL = Any()
 
         private const val serialVersionUID = 2162788535918724249L
 

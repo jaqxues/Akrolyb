@@ -74,7 +74,6 @@ open class FileLogger(val file: File) : Timber.Tree() {
                 """ |
 |                   |Debug Data Report:
                     |OS Version: ${Build.VERSION.SDK_INT} - ${Build.VERSION.CODENAME}
-                    |Akrolyb Version: ${BuildConfig.VERSION_NAME}
                     |
                     |Additional Debug Data:
                 """.trimMargin())

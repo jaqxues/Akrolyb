@@ -31,7 +31,7 @@ class Preference<T> private constructor(
         }
 
         @Suppress("UNCHECKED_CAST")
-        fun <T : Any> findPrefByKey(key: String): Preference<T> {
+        fun <T> findPrefByKey(key: String): Preference<T> {
             return prefList[key] as Preference<T>?
                     ?: throw Exception("Could not resolve Preference $key")
         }

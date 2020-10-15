@@ -1,4 +1,4 @@
-package com.jaqxues.akrolyb.prefs.gson
+package com.jaqxues.akrolyb.prefs.serializers
 
 import com.google.gson.*
 import com.jaqxues.akrolyb.prefs.Preference

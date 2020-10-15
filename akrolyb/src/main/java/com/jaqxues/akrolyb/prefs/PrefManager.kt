@@ -1,6 +1,6 @@
 package com.jaqxues.akrolyb.prefs
 
-import com.jaqxues.akrolyb.prefs.gson.GsonPrefMapSerializer
+import com.jaqxues.akrolyb.prefs.serializers.GsonPrefMapSerializer
 import com.jaqxues.akrolyb.utils.createFile
 import timber.log.Timber
 import java.io.File
