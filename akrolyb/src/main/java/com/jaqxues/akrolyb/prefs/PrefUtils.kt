@@ -13,27 +13,8 @@ inline fun <T> Preference<T>.updatePref(action: (T) -> T) {
     putPref(action(getPref()))
 }
 
-
-// Operations on Collection Preferences
-
-fun <T> Preference<out Collection<T>>.add(item: T, allowDuplicate: Boolean = false) {
-    val list = getPref()
-    val contains = item in list
-    if ((contains && allowDuplicate) || !contains) {
-        val newList = list.toMutableList()
-        newList.add(item)
-        putPref(newList)
-    }
-}
-
-fun <T> Preference<out Collection<T>>.remove(item: T) {
-    val list = getPref()
-    if (item in list) {
-        val newList = list.toMutableList()
-        newList.remove(item)
-        putPref(newList)
-    }
-}
+inline fun <T, K: T?> Preference<T>.edit(action: (T) -> K): K =
+    getPref().let { pref -> (action(pref)).also { edited -> if (pref != edited) putPref(edited) } }
 
 
 // Operation on other Preferences
@@ -51,7 +32,5 @@ operator fun <T> Preference<T>.invoke(action: (T) -> T) = updatePref(action)
 operator fun <T> Preference<T>.invoke(value: T) = putPref(value)
 operator fun <T> Preference<T>.unaryMinus() = removePref()
 
-operator fun <T> Preference<out Collection<T>>.plusAssign(element: T) = add(element, false)
-operator fun <T> Preference<out Collection<T>>.minusAssign(element: T) = remove(element)
 operator fun <T> Preference<out Collection<T>>.contains(element: T) = getPref().contains(element)
 operator fun Preference<Boolean>.not() = toggle()
