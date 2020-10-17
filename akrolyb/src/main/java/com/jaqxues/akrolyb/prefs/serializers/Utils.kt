@@ -6,6 +6,7 @@ import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
+import kotlin.reflect.javaType
 import com.google.gson.JsonElement as GJsonElement
 
 
@@ -14,11 +15,12 @@ import com.google.gson.JsonElement as GJsonElement
  * Date: 15.03.20 - Time 21:49.
  */
 
+@OptIn(ExperimentalStdlibApi::class)
 fun Gson.fromJson(el: GJsonElement, type: Types) =
     when (type) {
         is Types.KClassType -> fromJson(el, type.type.java)
         is Types.ReflectType -> fromJson(el, type.type)
-        else -> error("Unsupported Type, Incompatible Serializer")
+        is Types.KTypeType -> fromJson(el, type.type.javaType)
     }
 
 @OptIn(InternalSerializationApi::class)
