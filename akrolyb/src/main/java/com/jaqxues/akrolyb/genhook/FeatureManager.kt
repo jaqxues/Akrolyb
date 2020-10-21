@@ -33,7 +33,7 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
      * @return The features defined in the [FeatureProvider].
      */
     fun getActiveFeatures(alwaysReturnForced: Boolean = false): List<T> {
-        val disabled = disabledFeatures
+        val disabled = disabledFeatures()
         val activeOptionals = optionalFeatures.mapNotNull { (name, clazz) ->
             if (disabled.contains(name)) null else clazz
         }
@@ -78,7 +78,7 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
 
     fun isFeatureEnabled(key: String): Boolean {
         checkOptionalFeatureKey(key)
-        return key !in disabledFeatures
+        return key !in disabledFeatures()
     }
 
     private fun checkOptionalFeatureKey(key: String) {
