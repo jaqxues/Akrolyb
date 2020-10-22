@@ -5,7 +5,6 @@ import com.jaqxues.akrolyb.prefs.PreferenceMap
 import com.jaqxues.akrolyb.prefs.PreferenceMapSerializer
 import com.jaqxues.akrolyb.prefs.strictMode
 import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.*
 import timber.log.Timber
 import java.io.Reader
@@ -42,8 +41,10 @@ class KotlinXPrefMapSerializer : PreferenceMapSerializer {
                     Json.decodeFromJsonElement(pref.type.serializer, value)
                         ?: PreferenceMap.OBJ_NULL
                 } catch (ex: Exception) {
-                    Timber.w(ex)
-                    if (strictMode) continue
+                    if (strictMode) {
+                        Timber.e(ex, "Strict serializer will ignore and possibly overwrite unresolved Preference '$prefKey'")
+                        continue
+                    }
 
                     value
                 }

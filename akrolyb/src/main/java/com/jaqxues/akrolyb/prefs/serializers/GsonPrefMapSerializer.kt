@@ -41,8 +41,10 @@ class GsonPrefMapSerializer: JsonDeserializer<PreferenceMap>, JsonSerializer<Pre
                     val pref = Preference.findPrefByKey<Any>(prefKey)
                     GsonUtils.singleton.fromJson(value, pref.type) ?: PreferenceMap.OBJ_NULL
                 } catch (ex: Exception) {
-                    Timber.w(ex)
-                    if (strictMode) continue
+                    if (strictMode) {
+                        Timber.e(ex, "Strict serializer will ignore and possibly overwrite unresolved Preference '$prefKey'")
+                        continue
+                    }
 
                     value
                 }
