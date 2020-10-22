@@ -1,5 +1,6 @@
 package com.jaqxues.akrolyb.genhook
 
+import androidx.lifecycle.LiveData
 import kotlin.reflect.KClass
 
 
@@ -8,7 +9,7 @@ import kotlin.reflect.KClass
  * Date: 16.03.20 - Time 15:55.
  */
 interface FeatureProvider<T: Feature> {
-    val disabledFeatures: () -> List<String>
+    val disabledFeatures: LiveData<Set<String>>
 
     val optionalFeatures: Map<String, KClass<out T>>
 

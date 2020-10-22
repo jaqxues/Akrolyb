@@ -19,7 +19,7 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
     private val forcedFeatures = featureProvider.forcedFeatures
     private val optionalFeatures = featureProvider.optionalFeatures
     private val featureNames = forcedFeatures + optionalFeatures
-    private val disabledFeatures = featureProvider.disabledFeatures
+    val disabledFeatures = featureProvider.disabledFeatures
     private var hookDefs = featureProvider.hookDefs
 
     val stateDispatcher = StateDispatcher()
@@ -33,9 +33,9 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
      * @return The features defined in the [FeatureProvider].
      */
     fun getActiveFeatures(alwaysReturnForced: Boolean = false): List<T> {
-        val disabled = disabledFeatures()
+        val disabled = disabledFeatures.value!!
         val activeOptionals = optionalFeatures.mapNotNull { (name, clazz) ->
-            if (disabled.contains(name)) null else clazz
+            if (name in disabled) null else clazz
         }
 
         val list = if (activeOptionals.isEmpty()) {
@@ -78,7 +78,7 @@ class FeatureManager<T: FeatureHelper>(featureProvider: FeatureProvider<T>) {
 
     fun isFeatureEnabled(key: String): Boolean {
         checkOptionalFeatureKey(key)
-        return key !in disabledFeatures()
+        return key !in disabledFeatures.value!!
     }
 
     private fun checkOptionalFeatureKey(key: String) {
