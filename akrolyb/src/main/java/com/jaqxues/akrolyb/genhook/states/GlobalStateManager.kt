@@ -121,7 +121,7 @@ class GlobalStateManager: StateListener() {
 
         @Suppress("UNCHECKED_CAST")
         return reasonMap.map { (feature, reasons) ->
-            feature to when (reasons.max()) {
+            feature to when (reasons.maxOrNull()) {
                 is AbortSignal -> State.Aborted(reasons)
                 is WarnSignal -> State.Warning(reasons as List<WarnSignal>)
                 null -> State.Success

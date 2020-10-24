@@ -2,9 +2,12 @@ package com.jaqxues.akrolyb.genhook
 
 import android.app.Activity
 import android.content.Context
-import com.jaqxues.akrolyb.genhook.decs.*
+import com.jaqxues.akrolyb.genhook.decs.AddInsField
+import com.jaqxues.akrolyb.genhook.decs.ClassDec
+import com.jaqxues.akrolyb.genhook.decs.MemberDec
 import com.jaqxues.akrolyb.genhook.decs.MemberDec.ConstructorDec
 import com.jaqxues.akrolyb.genhook.decs.MemberDec.MethodDec
+import com.jaqxues.akrolyb.genhook.decs.VariableDec
 import com.jaqxues.akrolyb.genhook.states.ClassNotFoundException
 import com.jaqxues.akrolyb.genhook.states.StateDispatcher
 import com.jaqxues.akrolyb.utils.Predicate
@@ -32,15 +35,15 @@ abstract class FeatureHelper : Feature {
     protected fun callMethod(obj: Any?, method: MethodDec, vararg params: Any?): Any? {
         try {
             // obj == null -> invoke Static Method, must be resolved
-            if (obj == null || resolvedMembers.containsKey(method) &&
+            return if (obj == null || resolvedMembers.containsKey(method) &&
                 // Inheritance, call method on child
                 obj.javaClass.name == method.classDec.className
             ) {
-                return (resolvedMembers[method] as? Method
+                (resolvedMembers[method] as? Method
                     ?: throw AssertionError("Method not resolved"))
                     .invoke(obj, *params)
             } else {
-                return XposedHelpers.callMethod(obj, method.methodName, *params)
+                XposedHelpers.callMethod(obj, method.methodName, *params)
             }
         } catch (ex: Exception) {
             Timber.e(ex)
@@ -253,7 +256,11 @@ abstract class FeatureHelper : Feature {
             }
         }
 
-        fun lateInitAll(classLoader: ClassLoader, activity: Activity, stateDispatcher: StateDispatcher) {
+        fun lateInitAll(
+            classLoader: ClassLoader,
+            activity: Activity,
+            stateDispatcher: StateDispatcher
+        ) {
             for (feature in activeFeatures) {
                 try {
                     feature.lateInit(classLoader, activity)
@@ -281,7 +288,8 @@ abstract class FeatureHelper : Feature {
          *
          * @param classLoader  Target ClassLoader
          * @param features     Currently active features to decide which Members to resolve
-         * @param collectables Implemented ability to load Declarations either from static objects and from objects,
+         * @param stateDispatcher The [StateDispatcher] that errors will be sent to.
+         * @param hookDefs     Implemented ability to load Declarations either from static objects and from objects,
          *                     which allows for dynamically loading in Declarations from JSON Files or other input.
          */
         private fun resolveMembers(

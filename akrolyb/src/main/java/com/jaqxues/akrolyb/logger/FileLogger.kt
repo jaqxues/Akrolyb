@@ -3,12 +3,13 @@ package com.jaqxues.akrolyb.logger
 import android.annotation.SuppressLint
 import android.os.Build
 import android.util.Log
-import com.jaqxues.akrolyb.BuildConfig
 import com.jaqxues.akrolyb.utils.yyyyMMdd
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import timber.log.Timber
-import java.io.*
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
 import java.util.*
 import java.util.concurrent.TimeUnit
 

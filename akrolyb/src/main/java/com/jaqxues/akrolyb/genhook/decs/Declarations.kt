@@ -99,12 +99,14 @@ sealed class MemberDec(
         append(".")
         append(if (this@MemberDec is MethodDec) methodName else "<init>")
         append("(")
-        params.map {
-            if (it is String) it
-            else if (it is ClassDec) it.className
-            else if (it is Class<*>) it.name
-            else error("Illegal Type for Parameter")
-        }.joinTo(buffer = this, separator = ", ")
+        params.joinTo(buffer = this, separator = ", ") {
+            when (it) {
+                is String -> it
+                is ClassDec -> it.className
+                is Class<*> -> it.name
+                else -> error("Illegal Type for Parameter")
+            }
+        }
         append(")")
     }
 }

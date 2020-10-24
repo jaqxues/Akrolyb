@@ -16,9 +16,10 @@ import com.google.gson.JsonElement as GJsonElement
  */
 
 @OptIn(ExperimentalStdlibApi::class)
-fun Gson.fromJson(el: GJsonElement, type: Types) =
+fun <T> Gson.fromJson(el: GJsonElement, type: Types): T =
+    @Suppress("UNCHECKED_CAST")
     when (type) {
-        is Types.KClassType -> fromJson(el, type.type.java)
+        is Types.KClassType -> fromJson(el, type.type.java) as T
         is Types.ReflectType -> fromJson(el, type.type)
         is Types.KTypeType -> fromJson(el, type.type.javaType)
     }
@@ -33,6 +34,7 @@ val Types.serializer
         }
 
 fun <T> Json.encodeAnyToJsonElement(serializer: KSerializer<T>, obj: Any?) =
+    @Suppress("UNCHECKED_CAST")
     encodeToJsonElement(serializer, obj as T)
 
 object GsonUtils {

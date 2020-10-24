@@ -72,13 +72,12 @@ fun MemberDec.formatToGraphGuard(f: Field) = buildString {
     append("'")
     for (param in params) {
         append(", '")
-        if (param is String)
-            append(param)
-        else if (param is ClassDec)
-            append(param.className)
-        else if (param is Class<*>)
-            append(param.canonicalName!!)
-        else error("Illegal Type for param")
+        append(when (param) {
+            is String -> param
+            is ClassDec -> param.className
+            is Class<*> -> param.canonicalName!!
+            else -> error("Illegal Type for param")
+        })
         append("'")
     }
     if (f.isAnnotationPresent(SkipParams::class.java))

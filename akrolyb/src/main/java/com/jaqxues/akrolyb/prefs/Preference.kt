@@ -43,6 +43,7 @@ class Preference<T> constructor(val key: String, val default: T, val type: Types
 
 }
 
+@Suppress("FunctionName")
 @OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T> Preference(key: String, default: T) =
     Preference(
