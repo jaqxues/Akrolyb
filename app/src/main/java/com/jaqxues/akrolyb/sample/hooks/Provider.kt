@@ -14,7 +14,7 @@ import com.jaqxues.akrolyb.sample.prefs.Preferences
 object Provider {
     val features = FeatureManager(object : FeatureProvider<FeatureHelper> {
 
-        override val disabledFeatures = Preferences.DISABLED_FEATURES.getPref()
+        override val disabledFeatures = { Preferences.DISABLED_FEATURES.getPref().toSet() }
 
         override val optionalFeatures = mapOf(
             "saving" to SavingFeature::class

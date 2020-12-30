@@ -16,7 +16,6 @@ import com.jaqxues.akrolyb.sample.ipack.ModPack
 import com.jaqxues.akrolyb.sample.ipack.PackFactory
 import com.jaqxues.akrolyb.sample.prefs.Preferences
 import com.jaqxues.akrolyb.utils.Security
-import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 
 private const val PERM_REQ_CODE = 0xcafe
@@ -39,20 +38,20 @@ class MainActivity : AppCompatActivity() {
                     PERM_REQ_CODE
                 )
             }
-            init_pref_btn.setOnClickListener(listener)
-            init_pack_btn.setOnClickListener(listener)
+            findViewById<View>(R.id.init_pref_btn).setOnClickListener(listener)
+            findViewById<View>(R.id.init_pack_btn).setOnClickListener(listener)
         } else init()
     }
 
     private fun init() {
         // Make sure App has permissions to read/write to external Storage
-        init_pref_btn.setOnClickListener {
+        findViewById<View>(R.id.init_pref_btn).setOnClickListener {
             PrefManager.init(
                 File(Environment.getExternalStorageDirectory(), "Akrolyb/SomeFile.json"), Preferences::class
             )
         }
 
-        init_pack_btn.setOnClickListener {
+        findViewById<View>(R.id.init_pack_btn).setOnClickListener {
             val packFile = File(Environment.getExternalStorageDirectory(), "Akrolyb/Pack.jar")
             if (packFile.exists()) {
                 try {

@@ -4,7 +4,7 @@ apply plugin: "com.jaqxues.pack-compiler"
 
 android {
     compileSdkVersion 29
-    
+
 
     defaultConfig {
         minSdkVersion 21
@@ -22,13 +22,15 @@ dependencies {
 }
 
 packCompiler {
-    attributes = [
-            Development    : false,
-            PackImpl  : "com.jaqxues.akrolyb.sample.pack.PackImpl",
-            PackVersion    : "1.0.0",
-            PackVersionCode: 1,
-            MinApkVersionCode  : 1,
-    ]
+    attributes = { buildType ->
+        [
+                Development      : false,
+                PackImpl         : "com.jaqxues.akrolyb.sample.pack.PackImpl",
+                PackVersion      : "1.0.0",
+                PackVersionCode  : 1,
+                MinApkVersionCode: 1,
+        ]
+    }
     getJarName = { attributes ->
         return "Pack"
     }
