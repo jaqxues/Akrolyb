@@ -1,14 +1,25 @@
 package com.jaqxues.akrolyb.pack
 
 import android.content.Context
+import android.os.Build
 import com.jaqxues.akrolyb.utils.Security
 import dalvik.system.DexClassLoader
+import dalvik.system.InMemoryDexClassLoader
 import timber.log.Timber
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.InputStream
 import java.lang.reflect.InvocationTargetException
+import java.nio.ByteBuffer
+import java.security.Key
 import java.security.cert.X509Certificate
+import java.util.*
 import java.util.jar.JarFile
+import javax.crypto.Cipher
+import javax.crypto.CipherOutputStream
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 
 /**
@@ -108,13 +119,42 @@ abstract class ModPackBase<T : IPackMetadata>(metadata: T) {
 
             // Instantiating the actual ClassLoader
             val classLoader = try {
-                with(context.codeCacheDir) {
+                fun dexClassLoader(path: String) = with(context.codeCacheDir) {
                     if (!exists() && !mkdirs())
                         throw FileNotFoundException("Optimised CodeCache dir not found and could not be created")
-                    DexClassLoader(
-                        packFile.absolutePath, absolutePath,
-                        null, ModPackBase::class.java.classLoader
-                    )
+                    DexClassLoader(path, absolutePath, null, ModPackBase::class.java.classLoader)
+                }
+                if (metadata.isEncrypted) {
+                    val key = SecretKeySpec(packBuilder.getEncryptionKey(
+                        metadata, context, packFile
+                    ), "AES")
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                        InMemoryDexClassLoader(
+                            decryptedDexBuffers(key, packFile) { ins, cipher ->
+                                val outStream = ByteArrayOutputStream()
+                                CipherOutputStream(outStream, cipher).use {
+                                    ins.copyTo(it)
+                                }
+                                ByteBuffer.wrap(outStream.toByteArray())
+                            }.toList().toTypedArray(),
+                            ModPackBase::class.java.classLoader
+                        )
+                    } else {
+                        val s = decryptedDexBuffers(key, packFile) { ins, cipher ->
+                            val f = File.createTempFile(UUID.randomUUID().toString(), ".dex")
+                            CipherOutputStream(f.outputStream(), cipher).use { out ->
+                                ins.copyTo(out)
+                                out.flush()
+                            }
+                            f.absoluteFile
+                        }
+                        val c = dexClassLoader(s.joinToString(":"))
+                        s.forEach(File::delete)
+                        c
+                    }
+                } else {
+                    dexClassLoader(packFile.absolutePath)
                 }
             } catch (t: Throwable) {
                 throw PackClassLoaderException(t)
@@ -136,6 +176,31 @@ abstract class ModPackBase<T : IPackMetadata>(metadata: T) {
                     else -> "Unknown Error while instantiating Pack Implementation"
                 }
                 throw PackReflectionException(message, t)
+            }
+        }
+
+        private fun <R> decryptedDexBuffers(
+            key: Key,
+            packFile: File,
+            action: (InputStream, Cipher) -> R
+        ): List<R> {
+            val classRegex = """^classes\d*\.dex$""".toRegex()
+
+            openPackJar(packFile).use { jarFile ->
+                return jarFile.entries().asSequence().filter { entry ->
+                    classRegex matches entry.name
+                }.map { entry ->
+                    val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+                    jarFile.getInputStream(entry).use { ins ->
+                        cipher.init(
+                            Cipher.DECRYPT_MODE,
+                            key, IvParameterSpec(
+                                ByteArray(16).also { ba -> ins.read(ba) }
+                            )
+                        )
+                        action(ins, cipher)
+                    }
+                }.toList()
             }
         }
     }

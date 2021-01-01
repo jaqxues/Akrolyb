@@ -11,4 +11,5 @@ interface IPackMetadata {
     val packVersionCode: Int
     val packImplClass: String
     val minApkVersionCode: Int
+    val isEncrypted: Boolean
 }

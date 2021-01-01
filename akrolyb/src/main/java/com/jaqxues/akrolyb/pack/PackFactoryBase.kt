@@ -20,6 +20,9 @@ abstract class PackFactoryBase<T : IPackMetadata> {
     abstract val appData: AppData
     abstract fun buildMeta(attributes: Attributes, context: Context, file: File): T
 
+    open fun getEncryptionKey(packMetadata: T, context: Context, file: File): ByteArray =
+        error("Encrypted Packs not supported by PackFactory")
+
     /**
      * Overridable Method to perform checks.
      * `@CallSuper` enforced since these checks are highly recommended.
