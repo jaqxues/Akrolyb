@@ -107,6 +107,7 @@ abstract class ModPackBase<T : IPackMetadata>(metadata: T) {
             context: Context,
             packFile: File,
             certificate: X509Certificate? = null,
+            parentClassLoader: ClassLoader? = ModPackBase::class.java.classLoader,
             packBuilder: PackFactoryBase<T>,
             metadata: T = extractMetadata(context, packFile, certificate, packBuilder)
         ): M {
@@ -122,7 +123,7 @@ abstract class ModPackBase<T : IPackMetadata>(metadata: T) {
                 fun dexClassLoader(path: String) = with(context.codeCacheDir) {
                     if (!exists() && !mkdirs())
                         throw FileNotFoundException("Optimised CodeCache dir not found and could not be created")
-                    DexClassLoader(path, absolutePath, null, ModPackBase::class.java.classLoader)
+                    DexClassLoader(path, absolutePath, null, parentClassLoader)
                 }
                 if (metadata.isEncrypted) {
                     val key = SecretKeySpec(packBuilder.getEncryptionKey(
@@ -137,9 +138,7 @@ abstract class ModPackBase<T : IPackMetadata>(metadata: T) {
                                     ins.copyTo(it)
                                 }
                                 ByteBuffer.wrap(outStream.toByteArray())
-                            }.toList().toTypedArray(),
-                            ModPackBase::class.java.classLoader
-                        )
+                            }.toList().toTypedArray(), parentClassLoader)
                     } else {
                         val s = decryptedDexBuffers(key, packFile) { ins, cipher ->
                             val f = File.createTempFile(UUID.randomUUID().toString(), ".dex")
