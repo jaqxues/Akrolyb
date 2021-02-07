@@ -41,7 +41,7 @@ object Security {
 
         // All the entries are signed correctly. Going through every entry in [toCheck] to verify the actual Signature
         // Every file must be signed except files in META-INF
-        val clsDexRegex = "classes\\d*\\.dex".toRegex()
+        val clsDexRegex = """classes\d*\.dex""".toRegex()
         for (entry in toCheck) {
             val certs = entry.certificates
 

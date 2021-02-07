@@ -15,7 +15,8 @@ class PackMetadata(
     override val packVersion: String,
     override val packVersionCode: Int,
     override val packImplClass: String,
-    override val minApkVersionCode: Int
+    override val minApkVersionCode: Int,
+    override val isEncrypted: Boolean
 ) : IPackMetadata
 {
     companion object {
@@ -23,13 +24,14 @@ class PackMetadata(
             fun safeGetValue(name: String) =
                 attributes.getValue(name) ?: throw IllegalStateException("Pack did not include \"$name\" Attribute")
 
-            val devPack = safeGetValue("Development").equals("true", false)
+            val devPack = safeGetValue("Development").equals("true", true)
             val packImpl = safeGetValue("PackImpl")
             val packVersionCode = safeGetValue("PackVersionCode").toInt()
             val packVersion = safeGetValue("PackVersion")
             val minApkVersion = safeGetValue("MinApkVersionCode").toInt()
+            val isEncrypted = attributes.getValue("Encrypted")?.equals("true", true) ?: false
 
-            return PackMetadata(devPack, packVersion, packVersionCode, packImpl, minApkVersion)
+            return PackMetadata(devPack, packVersion, packVersionCode, packImpl, minApkVersion, isEncrypted)
         }
     }
 }

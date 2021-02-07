@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
                 try {
                     val value = if (BuildConfig.DEBUG) null else Security.certificateFromApk(this, BuildConfig.APPLICATION_ID)
                     val pack: ModPack = ModPackBase.buildPack(
-                        this, packFile, value, PackFactory
+                        this, packFile, value, packBuilder = PackFactory
                     )
                     pack.showSuccessToast(this)
                 } catch (t: PackException) {

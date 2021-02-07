@@ -19,7 +19,7 @@ class KotlinXPrefMapSerializer : PreferenceMapSerializer {
     private val prettyFormatJson = Json { prettyPrint = true }
 
     @OptIn(InternalSerializationApi::class)
-    override fun deserialize(reader: Reader): PreferenceMap? {
+    override fun deserialize(reader: Reader): PreferenceMap {
         val map = PreferenceMap()
 
         val t = reader.readText()
