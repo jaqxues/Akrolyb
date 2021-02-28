@@ -44,12 +44,12 @@ abstract class PackFactoryBase<T : IPackMetadata> {
         val data = appData
         // Performing Basic Checks
         if (packMetadata.devPack && !data.debug)
-            throw IllegalStateException("Developer Pack with non-debuggable Apk")
+            throw DeveloperPackException()
         if (packMetadata.minApkVersionCode > data.versionCode)
-            throw IllegalStateException("Pack requires newer Apk")
+            throw CheckMinApkVersionException(data.versionCode, packMetadata.minApkVersionCode)
         try {
             ModPackBase::class.java.classLoader!!.loadClass(packMetadata.packImplClass)
-            throw IllegalStateException("Detected Pack in Classloader. You might want to adjust your run configuration to not install the pack as dynamic feature.")
+            throw FoundPackClassloader()
         } catch (ignored: ClassNotFoundException) {}
     }
 }
