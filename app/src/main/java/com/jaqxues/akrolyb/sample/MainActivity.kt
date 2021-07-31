@@ -6,7 +6,15 @@ import android.os.Bundle
 import android.os.Environment
 import android.view.View
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material.Button
+import androidx.compose.material.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.jaqxues.akrolyb.pack.ModPackBase
@@ -16,65 +24,74 @@ import com.jaqxues.akrolyb.sample.ipack.ModPack
 import com.jaqxues.akrolyb.sample.ipack.PackFactory
 import com.jaqxues.akrolyb.sample.prefs.Preferences
 import com.jaqxues.akrolyb.utils.Security
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import java.io.File
 
-private const val PERM_REQ_CODE = 0xcafe
-
 class MainActivity : AppCompatActivity() {
+    private var hasPermission by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            val listener = View.OnClickListener {
-                ActivityCompat.requestPermissions(
-                    this@MainActivity,
-                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                    PERM_REQ_CODE
-                )
-            }
-            findViewById<View>(R.id.init_pref_btn).setOnClickListener(listener)
-            findViewById<View>(R.id.init_pack_btn).setOnClickListener(listener)
-        } else init()
-    }
+        setContent {
+            val ctx = LocalContext.current
+            hasPermission = ContextCompat.checkSelfPermission(ctx,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
 
-    private fun init() {
-        // Make sure App has permissions to read/write to external Storage
-        findViewById<View>(R.id.init_pref_btn).setOnClickListener {
-            PrefManager.init(
-                File(Environment.getExternalStorageDirectory(), "Akrolyb/SomeFile.json"), Preferences::class
-            )
-        }
-
-        findViewById<View>(R.id.init_pack_btn).setOnClickListener {
-            val packFile = File(Environment.getExternalStorageDirectory(), "Akrolyb/Pack.jar")
-            if (packFile.exists()) {
-                try {
-                    val value = if (BuildConfig.DEBUG) null else Security.certificateFromApk(this, BuildConfig.APPLICATION_ID)
-                    val pack: ModPack = ModPackBase.buildPack(
-                        this, packFile, value, packBuilder = PackFactory
-                    )
-                    pack.showSuccessToast(this)
-                } catch (t: PackException) {
-                    Toast.makeText(this, "${t::class.java.simpleName}: ${t.message}", Toast.LENGTH_LONG).show()
-                }
+            if (hasPermission) {
+                AppUi()
             } else {
-                Toast.makeText(this, "Pack does not exist", Toast.LENGTH_LONG).show()
+                val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+                    hasPermission = it
+                }
+                Button(onClick = {
+                    launcher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }) {
+                    Text("Request Storage Permission")
+                }
             }
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        if (requestCode == PERM_REQ_CODE) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                init()
-            else
-                Toast.makeText(this, "Permission not granted", Toast.LENGTH_LONG).show()
+    @Composable
+    private fun AppUi() {
+        val errorFlow = remember { MutableSharedFlow<String>() }
+        val scope = rememberCoroutineScope()
+        val ctx = LocalContext.current
+        fun showError(msg: String) = scope.launch { errorFlow.emit(msg) }
+
+        Column {
+            Button(onClick = {
+                PrefManager.init(File(Environment.getExternalStorageDirectory(), "Akrolyb/SomeFile.json"), Preferences::class)
+            }) {
+                Text("Init Prefs Module")
+            }
+
+            Button(onClick = {
+                val packFile = File(Environment.getExternalStorageDirectory(), "Akrolyb/Pack.jar")
+                if (packFile.exists()) {
+                    try {
+                        val value = if (BuildConfig.DEBUG) null else Security.certificateFromApk(ctx, BuildConfig.APPLICATION_ID)
+                        val pack: ModPack = ModPackBase.buildPack(
+                            ctx, packFile, value, packBuilder = PackFactory
+                        )
+                        pack.showSuccessToast(ctx)
+                    } catch (t: PackException) {
+                            showError("${t::class.java.simpleName}: ${t.message}")
+                    }
+                } else {
+                    showError("Pack does not exist")
+                }
+            }) {
+                Text("Init Module Pack")
+            }
+        }
+
+        val msg by errorFlow.collectAsState(null)
+        msg?.let {
+            Toast.makeText(ctx, it, Toast.LENGTH_LONG).show()
         }
     }
 }
