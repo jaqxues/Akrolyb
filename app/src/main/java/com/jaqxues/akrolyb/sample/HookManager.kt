@@ -1,17 +1,18 @@
 package com.jaqxues.akrolyb.sample
 
-import android.app.Activity
+import android.Manifest
 import android.app.Application
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import androidx.core.content.ContextCompat
 import com.jaqxues.akrolyb.prefs.PrefManager
-import com.jaqxues.akrolyb.sample.hooks.Provider
 import com.jaqxues.akrolyb.sample.prefs.Preferences
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.callbacks.XC_LoadPackage
@@ -31,7 +32,9 @@ class HookManager : IXposedHookLoadPackage {
             return
 
         // Prevents System APK hooking into Virtual Xposed
-        if (HookManager::class.java.classLoader!!.toString().contains("io.va.exposed") != (System.getProperty("vxp") != null))
+        if (HookManager::class.java.classLoader!!.toString()
+                .contains("io.va.exposed") != (System.getProperty("vxp") != null)
+        )
             return
 
         // Make sure app has permissions to read from External Storage
@@ -45,36 +48,70 @@ class HookManager : IXposedHookLoadPackage {
             t
         }
 
-        findAndHookMethod(Application::class.java, "attach", Context::class.java, object : XC_MethodHook() {
-            override fun afterHookedMethod(param: MethodHookParam) {
+        findAndHookMethod(
+            Application::class.java,
+            "attach",
+            Context::class.java,
+            object : XC_MethodHook() {
+                override fun afterHookedMethod(param: MethodHookParam) {
 
-                findAndHookMethod(TARGET_ACTIVITY_NAME, lpparam.classLoader,
-                    "onCreate", Bundle::class.java, object : XC_MethodHook() {
-                        override fun afterHookedMethod(param: MethodHookParam) {
 
-                            callMethod(param.thisObject, "testInvokeMethod")
-                            if (throwable != null) {
-                                callMethod(param.thisObject, "showErrorMsg", throwable.message)
-                                return
-                            }
+                    findAndHookMethod(TARGET_ACTIVITY_NAME, lpparam.classLoader,
+                        "onCreate", Bundle::class.java, object : XC_MethodHook() {
+                            override fun afterHookedMethod(param: MethodHookParam) {
 
-                            try {
+
+                                val storageAccess = runCatching {
+                                    val hasWritePermission = ContextCompat.checkSelfPermission(
+                                        param.thisObject as Context,
+                                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                    ) == PackageManager.PERMISSION_GRANTED
+
+                                    when {
+                                        !hasWritePermission -> "DENIED"
+
+                                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                                                && !Environment.isExternalStorageLegacy() -> "SCOPED"
+
+                                        else -> "LEGACY"
+                                    }
+                                }.onFailure {
+                                    Log.e(
+                                        "AkrolybSample",
+                                        "Could not determine Storage Access Type",
+                                        it
+                                    )
+                                }.getOrNull()
+
+
+                                callMethod(
+                                    param.thisObject,
+                                    "setPerceivedStorageAccessType",
+                                    storageAccess
+                                )
+                                callMethod(param.thisObject, "testInvokeMethod")
+                                if (throwable != null) {
+                                    callMethod(param.thisObject, "showErrorMsg", throwable.message)
+                                    return
+                                }
+
+                                try {
 //                                    Provider.features.lateInitAll(lpparam.classLoader, param.thisObject as Activity)
-                            } catch (t: Throwable) {
-                                Log.e("AkrolybSample", "Stage 3 Loading Error occurred", t)
+                                } catch (t: Throwable) {
+                                    Log.e("AkrolybSample", "Stage 3 Loading Error occurred", t)
+                                }
                             }
-                        }
-                    })
+                        })
 
-                try {
+                    try {
 //                    Provider.features.loadAll(
 //                        lpparam.classLoader,
 //                        param.args[0] as Context
 //                    )
-                } catch (t: Throwable) {
-                    Log.e("AkrolybSample", "Stage 2 Loading Error occurred", t)
+                    } catch (t: Throwable) {
+                        Log.e("AkrolybSample", "Stage 2 Loading Error occurred", t)
+                    }
                 }
-            }
-        })
+            })
     }
 }

@@ -27,12 +27,13 @@ class MainActivity : ComponentActivity() {
         "Method Invocation" to false
     )
     private var errorMsg by mutableStateOf<String?>(null)
+    private var storageAccess by mutableStateOf<StorageAccessType?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             AkrolybTheme {
-                AppUi(errorMsg, states)
+                AppUi(errorMsg, states, storageAccess)
             }
         }
     }
@@ -44,18 +45,32 @@ class MainActivity : ComponentActivity() {
     fun showErrorMsg(msg: String) {
         errorMsg = msg
     }
+
+    fun setPerceivedStorageAccessType(type: String?) {
+        storageAccess = type?.let { StorageAccessType.valueOf(it) }
+    }
 }
 
 @Composable
-fun AppUi(error: String?, states: SnapshotStateMap<String, Boolean>) {
+fun AppUi(
+    error: String?,
+    states: SnapshotStateMap<String, Boolean>,
+    storageAccess: StorageAccessType?
+) {
     Scaffold {
         LazyColumn(
-            Modifier.fillMaxSize().padding(8.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             item {
                 Text("Akrolyb Sample Hook Target", style = MaterialTheme.typography.h5)
+
+                Spacer(Modifier.padding(32.dp))
+
+                Text("Perceived Storage Access Type: ${storageAccess?.displayName ?: "Unknown"}")
 
                 Spacer(Modifier.padding(32.dp))
             }
@@ -75,7 +90,11 @@ fun AppUi(error: String?, states: SnapshotStateMap<String, Boolean>) {
                             if (!it.second)
                                 mod
                                     .padding(8.dp)
-                                    .border(width = 1.dp, color = MaterialTheme.colors.error, shape = RoundedCornerShape(4.dp))
+                                    .border(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colors.error,
+                                        shape = RoundedCornerShape(4.dp)
+                                    )
                                     .padding(8.dp)
                             else mod.padding(16.dp)
                         }
@@ -96,13 +115,20 @@ fun AppUi(error: String?, states: SnapshotStateMap<String, Boolean>) {
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    AppUi("Example Error Message", remember {
-        mutableStateMapOf(
-            "Preview State 1" to true,
-            "Preview State 2" to false,
-            "Preview State 3" to true,
-            "Preview State 4" to true,
-            "Preview State 5" to false
-        )
-    })
+    AppUi(
+        error = "Example Error Message",
+        states = remember {
+            mutableStateMapOf(
+                "Preview State 1" to true,
+                "Preview State 2" to false,
+                "Preview State 3" to true,
+                "Preview State 4" to true,
+                "Preview State 5" to false
+            )
+        }, storageAccess = null
+    )
+}
+
+enum class StorageAccessType(val displayName: String) {
+    LEGACY("Legacy"), DENIED("Denied"), SCOPED("Scoped");
 }
