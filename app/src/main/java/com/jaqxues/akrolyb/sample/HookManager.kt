@@ -5,12 +5,14 @@ import android.app.Application
 import android.content.Context
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
 import com.jaqxues.akrolyb.prefs.PrefManager
 import com.jaqxues.akrolyb.sample.hooks.Provider
 import com.jaqxues.akrolyb.sample.prefs.Preferences
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
+import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import java.io.File
@@ -33,30 +35,44 @@ class HookManager : IXposedHookLoadPackage {
             return
 
         // Make sure app has permissions to read from External Storage
-        PrefManager.init(
-            File(Environment.getExternalStorageDirectory(), "SomeFile.json"), Preferences::class)
+        val throwable = try {
+            PrefManager.init(
+                File(Environment.getExternalStorageDirectory(), "SomeFile.json"), Preferences::class
+            )
+            null
+        } catch (t: Throwable) {
+            Log.e("AkrolybSample", "Stage 1 Loading Error occurred", t)
+            t
+        }
 
         findAndHookMethod(Application::class.java, "attach", Context::class.java, object : XC_MethodHook() {
             override fun afterHookedMethod(param: MethodHookParam) {
-                try {
-                    Provider.features.loadAll(
-                        lpparam.classLoader,
-                        param.args[0] as Context
-                    )
 
-                    findAndHookMethod(TARGET_ACTIVITY_NAME, lpparam.classLoader,
-                        "onCreate", Bundle::class.java, object : XC_MethodHook() {
-                            override fun afterHookedMethod(param: MethodHookParam) {
-                                try {
-                                    Provider.features.lateInitAll(lpparam.classLoader, param.thisObject as Activity)
-                                } catch (t: Throwable) {
-                                    XposedBridge.log(t)
-                                }
+                findAndHookMethod(TARGET_ACTIVITY_NAME, lpparam.classLoader,
+                    "onCreate", Bundle::class.java, object : XC_MethodHook() {
+                        override fun afterHookedMethod(param: MethodHookParam) {
+
+                            callMethod(param.thisObject, "testInvokeMethod")
+                            if (throwable != null) {
+                                callMethod(param.thisObject, "showErrorMsg", throwable.message)
+                                return
                             }
-                        })
 
+                            try {
+//                                    Provider.features.lateInitAll(lpparam.classLoader, param.thisObject as Activity)
+                            } catch (t: Throwable) {
+                                Log.e("AkrolybSample", "Stage 3 Loading Error occurred", t)
+                            }
+                        }
+                    })
+
+                try {
+//                    Provider.features.loadAll(
+//                        lpparam.classLoader,
+//                        param.args[0] as Context
+//                    )
                 } catch (t: Throwable) {
-                    XposedBridge.log(t)
+                    Log.e("AkrolybSample", "Stage 2 Loading Error occurred", t)
                 }
             }
         })

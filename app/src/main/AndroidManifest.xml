@@ -32,6 +32,6 @@
                 android:value="Example for Akrolyb" />
         <meta-data
                 android:name="xposedscope"
-                android:value="@array/xposed_scope" />
+                android:resource="@array/xposed_scope" />
     </application>
 </manifest>
