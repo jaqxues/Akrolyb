@@ -1,14 +1,10 @@
 package com.jaqxues.akrolyb.sample
 
-import android.Manifest
 import android.app.Application
 import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
-import androidx.core.content.ContextCompat
 import com.jaqxues.akrolyb.prefs.PrefManager
 import com.jaqxues.akrolyb.sample.prefs.Preferences
 import de.robv.android.xposed.IXposedHookLoadPackage
@@ -60,35 +56,6 @@ class HookManager : IXposedHookLoadPackage {
                         "onCreate", Bundle::class.java, object : XC_MethodHook() {
                             override fun afterHookedMethod(param: MethodHookParam) {
 
-
-                                val storageAccess = runCatching {
-                                    val hasWritePermission = ContextCompat.checkSelfPermission(
-                                        param.thisObject as Context,
-                                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                                    ) == PackageManager.PERMISSION_GRANTED
-
-                                    when {
-                                        !hasWritePermission -> "DENIED"
-
-                                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-                                                && !Environment.isExternalStorageLegacy() -> "SCOPED"
-
-                                        else -> "LEGACY"
-                                    }
-                                }.onFailure {
-                                    Log.e(
-                                        "AkrolybSample",
-                                        "Could not determine Storage Access Type",
-                                        it
-                                    )
-                                }.getOrNull()
-
-
-                                callMethod(
-                                    param.thisObject,
-                                    "setPerceivedStorageAccessType",
-                                    storageAccess
-                                )
                                 callMethod(param.thisObject, "testInvokeMethod")
                                 if (throwable != null) {
                                     callMethod(param.thisObject, "showErrorMsg", throwable.message)
