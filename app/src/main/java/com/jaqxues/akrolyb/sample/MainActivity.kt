@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Environment
-import android.view.View
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -15,7 +14,6 @@ import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.jaqxues.akrolyb.pack.ModPackBase
 import com.jaqxues.akrolyb.pack.PackException
@@ -24,7 +22,6 @@ import com.jaqxues.akrolyb.sample.ipack.ModPack
 import com.jaqxues.akrolyb.sample.ipack.PackFactory
 import com.jaqxues.akrolyb.sample.prefs.Preferences
 import com.jaqxues.akrolyb.utils.Security
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import java.io.File
@@ -35,17 +32,18 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        hasPermission = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) == PackageManager.PERMISSION_GRANTED
         setContent {
-            val ctx = LocalContext.current
-            hasPermission = ContextCompat.checkSelfPermission(ctx,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
-
             if (hasPermission) {
                 AppUi()
             } else {
-                val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-                    hasPermission = it
-                }
+                val launcher =
+                    rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+                        hasPermission = it
+                    }
                 Button(onClick = {
                     launcher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 }) {
@@ -64,7 +62,12 @@ class MainActivity : AppCompatActivity() {
 
         Column {
             Button(onClick = {
-                PrefManager.init(File(Environment.getExternalStorageDirectory(), "Akrolyb/SomeFile.json"), Preferences::class)
+                PrefManager.init(
+                    File(
+                        Environment.getExternalStorageDirectory(),
+                        "Akrolyb/SomeFile.json"
+                    ), Preferences::class
+                )
             }) {
                 Text("Init Prefs Module")
             }
@@ -73,13 +76,16 @@ class MainActivity : AppCompatActivity() {
                 val packFile = File(Environment.getExternalStorageDirectory(), "Akrolyb/Pack.jar")
                 if (packFile.exists()) {
                     try {
-                        val value = if (BuildConfig.DEBUG) null else Security.certificateFromApk(ctx, BuildConfig.APPLICATION_ID)
+                        val value = if (BuildConfig.DEBUG) null else Security.certificateFromApk(
+                            ctx,
+                            BuildConfig.APPLICATION_ID
+                        )
                         val pack: ModPack = ModPackBase.buildPack(
                             ctx, packFile, value, packBuilder = PackFactory
                         )
                         pack.showSuccessToast(ctx)
                     } catch (t: PackException) {
-                            showError("${t::class.java.simpleName}: ${t.message}")
+                        showError("${t::class.java.simpleName}: ${t.message}")
                     }
                 } else {
                     showError("Pack does not exist")

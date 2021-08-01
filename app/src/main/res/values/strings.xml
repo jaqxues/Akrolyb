@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Akrolyb Sample</string>
+    <string-array name="xposed_scope">
+        <item>com.jaqxues.akrolyb.sample.target</item>
+    </string-array>
 </resources>

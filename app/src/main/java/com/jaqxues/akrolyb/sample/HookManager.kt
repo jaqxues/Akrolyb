@@ -20,10 +20,12 @@ import java.io.File
  * This file was created by Jacques Hoffmann (jaqxues) in the Project Akrolyb.<br>
  * Date: 27.03.20 - Time 20:35.
  */
+const val TARGET_PKG_NAME = "com.jaqxues.akrolyb.sample.target"
+const val TARGET_ACTIVITY_NAME = "com.jaqxues.akrolyb.sample.target.MainActivity"
 
 class HookManager : IXposedHookLoadPackage {
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        if (lpparam.packageName != "com.some.example.app")
+        if (lpparam.packageName != TARGET_PKG_NAME)
             return
 
         // Prevents System APK hooking into Virtual Xposed
@@ -42,7 +44,7 @@ class HookManager : IXposedHookLoadPackage {
                         param.args[0] as Context
                     )
 
-                    findAndHookMethod("com.some.example.app.SomeActivity", lpparam.classLoader,
+                    findAndHookMethod(TARGET_ACTIVITY_NAME, lpparam.classLoader,
                         "onCreate", Bundle::class.java, object : XC_MethodHook() {
                             override fun afterHookedMethod(param: MethodHookParam) {
                                 try {

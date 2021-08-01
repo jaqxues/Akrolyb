@@ -6,3 +6,4 @@ if (!System.env.JITPACK) {
 }
 
 rootProject.name='Akrolyb'
+include ':app_target'
