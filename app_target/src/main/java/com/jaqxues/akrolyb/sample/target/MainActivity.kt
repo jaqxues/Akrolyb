@@ -1,12 +1,6 @@
 package com.jaqxues.akrolyb.sample.target
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.border
@@ -25,7 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import com.jaqxues.akrolyb.sample.target.ui.theme.AkrolybTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,6 +30,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        states["Hook Example"] = Utils.hookTarget()
         setContent {
             AkrolybTheme {
                 AppUi(errorMsg, states)
@@ -134,27 +128,4 @@ fun DefaultPreview() {
             )
         }
     )
-}
-
-enum class StorageAccessType(val displayName: String) {
-    LEGACY("Legacy"), DENIED("Denied"), SCOPED("Scoped");
-
-    companion object {
-        fun determineFromCtx(ctx: Context) = runCatching {
-            val hasWritePermission = ContextCompat.checkSelfPermission(
-                ctx, Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
-
-            when {
-                !hasWritePermission -> DENIED
-
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-                        && !Environment.isExternalStorageLegacy() -> SCOPED
-
-                else -> LEGACY
-            }
-        }.onFailure {
-            Log.e("AkrolybSample", "Could not determine Storage Access Type", it)
-        }.getOrNull()
-    }
 }

@@ -9,6 +9,7 @@ import com.jaqxues.akrolyb.prefs.PrefManager
 import com.jaqxues.akrolyb.sample.prefs.Preferences
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.callbacks.XC_LoadPackage
@@ -50,6 +51,10 @@ class HookManager : IXposedHookLoadPackage {
             Context::class.java,
             object : XC_MethodHook() {
                 override fun afterHookedMethod(param: MethodHookParam) {
+
+                    findAndHookMethod(
+                        "com.jaqxues.akrolyb.sample.target.Utils", lpparam.classLoader,
+                        "hookTarget", XC_MethodReplacement.returnConstant(true))
 
 
                     findAndHookMethod(TARGET_ACTIVITY_NAME, lpparam.classLoader,
