@@ -22,10 +22,6 @@ import androidx.compose.ui.unit.dp
 import com.jaqxues.akrolyb.sample.target.ui.theme.AkrolybTheme
 
 class MainActivity : ComponentActivity() {
-    private val states = mutableStateMapOf(
-        "Initial Setup" to true,
-        "Method Invocation" to false
-    )
     private var errorMsg by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +43,15 @@ class MainActivity : ComponentActivity() {
     @Suppress("unused")
     fun showErrorMsg(msg: String) {
         errorMsg = msg
+    }
+
+    companion object {
+        private val states = mutableStateMapOf(
+            "Initial Setup" to true,
+            "Method Invocation" to false,
+            "Hook Example" to false,
+            "Initialized Pack Hooks" to false
+        )
     }
 }
 

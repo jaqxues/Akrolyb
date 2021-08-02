@@ -18,6 +18,7 @@ abstract class ModPack(metadata: PackMetadata) : ModPackBase<PackMetadata>(metad
     abstract fun <T> customMethods(): T
     abstract fun getFragments(): Array<Fragment>
     abstract fun showSuccessToast(context: Context)
+    abstract fun injectHooks(classLoader: ClassLoader)
 }
 
 object PackFactory: PackFactoryBase<PackMetadata>() {

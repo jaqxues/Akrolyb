@@ -5,8 +5,13 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import com.jaqxues.akrolyb.pack.ModPackBase
+import com.jaqxues.akrolyb.pack.PackException
 import com.jaqxues.akrolyb.prefs.PrefManager
+import com.jaqxues.akrolyb.sample.ipack.ModPack
+import com.jaqxues.akrolyb.sample.ipack.PackFactory
 import com.jaqxues.akrolyb.sample.prefs.Preferences
+import com.jaqxues.akrolyb.utils.Security
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
@@ -76,10 +81,24 @@ class HookManager : IXposedHookLoadPackage {
                         })
 
                     try {
-//                    Provider.features.loadAll(
-//                        lpparam.classLoader,
-//                        param.args[0] as Context
-//                    )
+                        val packFile = File(Environment.getExternalStorageDirectory(), "Akrolyb/Pack_unsigned.jar")
+                        if (packFile.exists()) {
+                            val ctx = param.args[0] as Context
+                            try {
+                                val value = if (BuildConfig.DEBUG) null else Security.certificateFromApk(
+                                    ctx,
+                                    BuildConfig.APPLICATION_ID
+                                )
+                                val pack: ModPack = ModPackBase.buildPack(
+                                    ctx, packFile, value, packBuilder = PackFactory
+                                )
+                                pack.injectHooks(lpparam.classLoader)
+                            } catch (t: PackException) {
+                                Log.e("AkrolybSample", "Failed to load Pack", t)
+                            }
+                        } else {
+                            Log.e("AkrolybSample", "Pack does not exist")
+                        }
                     } catch (t: Throwable) {
                         Log.e("AkrolybSample", "Stage 2 Loading Error occurred", t)
                     }
