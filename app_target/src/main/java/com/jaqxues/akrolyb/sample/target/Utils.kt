@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
-import android.util.Log
 import androidx.core.content.ContextCompat
+import timber.log.Timber
 
 
 enum class StorageAccessType(val displayName: String) {
@@ -27,7 +27,7 @@ enum class StorageAccessType(val displayName: String) {
                 else -> LEGACY
             }
         } catch (t: Throwable) {
-            Log.e("AkrolybSample", "Could not determine Storage Access Type", t)
+            Timber.e(t, "Could not determine Storage Access Type")
             null
         }
     }

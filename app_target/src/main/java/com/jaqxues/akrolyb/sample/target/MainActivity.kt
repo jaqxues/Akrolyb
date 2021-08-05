@@ -29,7 +29,9 @@ class MainActivity : ComponentActivity() {
         states["Hook Example"] = Utils.hookTarget()
         setContent {
             AkrolybTheme {
-                AppUi(errorMsg, states)
+                Scaffold {
+                    AppUi(errorMsg, states)
+                }
             }
         }
     }
@@ -60,59 +62,57 @@ fun AppUi(
     error: String?,
     states: SnapshotStateMap<String, Boolean>
 ) {
-    Scaffold {
-        LazyColumn(
-            Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
+    LazyColumn(
+        Modifier
+            .padding(8.dp)
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        item {
+            Text("Akrolyb Sample Hook Target", style = MaterialTheme.typography.h5)
+
+            Spacer(Modifier.padding(32.dp))
+
+            val ctx = LocalContext.current
+            val storageAccess = remember { StorageAccessType.determineFromCtx(ctx) }
+
+            Text("Storage Access Type: ${storageAccess?.displayName ?: "Unknown"}")
+
+            Spacer(Modifier.padding(32.dp))
+        }
+
+        if (error != null) {
             item {
-                Text("Akrolyb Sample Hook Target", style = MaterialTheme.typography.h5)
-
-                Spacer(Modifier.padding(32.dp))
-
-                val ctx = LocalContext.current
-                val storageAccess = remember { StorageAccessType.determineFromCtx(ctx) }
-
-                Text("Storage Access Type: ${storageAccess?.displayName ?: "Unknown"}")
-
+                Text("An error occurred: ")
+                Text(error)
                 Spacer(Modifier.padding(32.dp))
             }
+        }
 
-            if (error != null) {
-                item {
-                    Text("An error occurred: ")
-                    Text(error)
-                    Spacer(Modifier.padding(32.dp))
-                }
-            }
-
-            items(states.toList()) {
-                Row(
-                    Modifier
-                        .let { mod ->
-                            if (!it.second)
-                                mod
-                                    .padding(8.dp)
-                                    .border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colors.error,
-                                        shape = RoundedCornerShape(4.dp)
-                                    )
-                                    .padding(8.dp)
-                            else mod.padding(16.dp)
-                        }
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(it.first)
-                    Text(
-                        if (it.second) "Success" else "Error",
-                        color = if (it.second) Color.Unspecified else MaterialTheme.colors.error
-                    )
-                }
+        items(states.toList()) {
+            Row(
+                Modifier
+                    .let { mod ->
+                        if (!it.second)
+                            mod
+                                .padding(8.dp)
+                                .border(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colors.error,
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                                .padding(8.dp)
+                        else mod.padding(16.dp)
+                    }
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(it.first)
+                Text(
+                    if (it.second) "Success" else "Error",
+                    color = if (it.second) Color.Unspecified else MaterialTheme.colors.error
+                )
             }
         }
     }
@@ -121,16 +121,18 @@ fun AppUi(
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    AppUi(
-        error = "Example Error Message",
-        states = remember {
-            mutableStateMapOf(
-                "Preview State 1" to true,
-                "Preview State 2" to false,
-                "Preview State 3" to true,
-                "Preview State 4" to true,
-                "Preview State 5" to false
-            )
-        }
-    )
+    Scaffold {
+        AppUi(
+            error = "Example Error Message",
+            states = remember {
+                mutableStateMapOf(
+                    "Preview State 1" to true,
+                    "Preview State 2" to false,
+                    "Preview State 3" to true,
+                    "Preview State 4" to true,
+                    "Preview State 5" to false
+                )
+            }
+        )
+    }
 }

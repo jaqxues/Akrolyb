@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import android.os.Bundle
 import android.os.Environment
-import android.util.Log
 import com.jaqxues.akrolyb.pack.ModPackBase
 import com.jaqxues.akrolyb.pack.PackException
 import com.jaqxues.akrolyb.prefs.PrefManager
@@ -18,6 +17,7 @@ import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XposedHelpers.callMethod
 import de.robv.android.xposed.XposedHelpers.findAndHookMethod
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import timber.log.Timber
 import java.io.File
 
 
@@ -39,6 +39,8 @@ class HookManager : IXposedHookLoadPackage {
         )
             return
 
+        Timber.plant(Timber.DebugTree())
+
         // Make sure app has permissions to read from External Storage
         val throwable = try {
             PrefManager.init(
@@ -46,7 +48,7 @@ class HookManager : IXposedHookLoadPackage {
             )
             null
         } catch (t: Throwable) {
-            Log.e("AkrolybSample", "Stage 1 Loading Error occurred", t)
+            Timber.e(t, "Stage 1 Loading Error occurred")
             t
         }
 
@@ -75,7 +77,7 @@ class HookManager : IXposedHookLoadPackage {
                                 try {
 //                                    Provider.features.lateInitAll(lpparam.classLoader, param.thisObject as Activity)
                                 } catch (t: Throwable) {
-                                    Log.e("AkrolybSample", "Stage 3 Loading Error occurred", t)
+                                    Timber.e(t, "Stage 3 Loading Error occurred")
                                 }
                             }
                         })
@@ -94,13 +96,13 @@ class HookManager : IXposedHookLoadPackage {
                                 )
                                 pack.injectHooks(lpparam.classLoader)
                             } catch (t: PackException) {
-                                Log.e("AkrolybSample", "Failed to load Pack", t)
+                                Timber.e(t, "Failed to load Pack")
                             }
                         } else {
-                            Log.e("AkrolybSample", "Pack does not exist")
+                            Timber.e("Pack does not exist")
                         }
                     } catch (t: Throwable) {
-                        Log.e("AkrolybSample", "Stage 2 Loading Error occurred", t)
+                        Timber.e(t, "Stage 2 Loading Error occurred")
                     }
                 }
             })
