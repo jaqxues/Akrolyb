@@ -31,7 +31,7 @@ open class FileLogger(val file: File) : Timber.Tree() {
     }
 
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-        if (!channel.offer(LogItem(priority, tag, message, t))) {
+        if (channel.trySend(LogItem(priority, tag, message, t)).isFailure) {
             Log.wtf(TAG, IllegalStateException("Could not send an error to the Channel."))
         }
     }
@@ -49,7 +49,7 @@ open class FileLogger(val file: File) : Timber.Tree() {
                 channel.close()
                 Log.i(TAG, "Logging Coroutine was cancelled. Processing the rest of the items in the Channel")
                 var item: LogItem?
-                while (channel.poll().also { item = it } != null) {
+                while (channel.tryReceive().also { item = it.getOrNull() }.isSuccess) {
                     writeLogItem(writer, item!!)
                 }
                 writer.flush()
